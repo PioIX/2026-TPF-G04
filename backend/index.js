@@ -113,3 +113,84 @@ app.put('/puntos', async function(req,res){
     }
 })
 
+///////// Partidas
+
+app.get('/partidas', async function (req, res) {
+    try {
+        let respuesta = await realizarQuery(`SELECT * FROM Partidas`)
+        res.status(200).json(respuesta)
+    } catch (error) {
+        console.error("Error en /partidas:", error)
+        res.status(500).json({ mensaje: "Hubo un error al obtener las partidas" })
+    }
+});
+
+app.post('/partidas', async function (req, res) {
+    try {
+        await realizarQuery(`INSERT INTO Puntos (rondas, usuario_ganador) VALUES
+            ('${req.body.rondas}', '${req.body.usuario_ganador}')`);
+        res.status(201).json({ mensaje: "Partida creada con éxito" });
+    } catch (error) {
+        console.error("Error en /puntos:", error);
+        res.status(500).json({ mensaje: "Hubo un error al crear la partida" });
+    }
+});
+
+app.delete('/partidas', async function(req,res){
+    try{
+        let respuesta = await realizarQuery(`DELETE FROM Partidas WHERE id = ${req.body.id}`)
+        res.json({ message: "Partida eliminada" })
+    }catch(error){
+        return ("Hubo un error")
+    }
+})
+
+app.put('/partidas', async function(req,res){
+    try{
+        let respuesta = await realizarQuery(`UPDATE Partidas SET ${req.body.modificacion} = '${req.body.valor}' WHERE id = ${req.body.id}`)
+        res.json({ message: "Partida modificada" })
+    }catch(error){
+        return("Hubo un error")
+    }
+})
+
+///////// Palabras
+
+app.get('/palabras', async function (req, res) {
+    try {
+        let respuesta = await realizarQuery(`SELECT * FROM Palabras`)
+        res.status(200).json(respuesta)
+    } catch (error) {
+        console.error("Error en /palabras:", error)
+        res.status(500).json({ mensaje: "Hubo un error al obtener las palabras" })
+    }
+});
+
+app.post('/palabras', async function (req, res) {
+    try {
+        await realizarQuery(`INSERT INTO Palabras (palabra, id_partida) VALUES
+            ('${req.body.palabra}', '${req.body.id_partida}')`);
+        res.status(201).json({ mensaje: "Palabra creada con éxito" });
+    } catch (error) {
+        console.error("Error en /palabras:", error);
+        res.status(500).json({ mensaje: "Hubo un error al crear la palabra" });
+    }
+});
+
+app.delete('/palabras', async function(req,res){
+    try{
+        let respuesta = await realizarQuery(`DELETE FROM Palabras WHERE id = ${req.body.id}`)
+        res.json({ message: "palabra eliminada" })
+    }catch(error){
+        return ("Hubo un error")
+    }
+})
+
+app.put('/palabras', async function(req,res){
+    try{
+        let respuesta = await realizarQuery(`UPDATE Palabras SET ${req.body.modificacion} = '${req.body.valor}' WHERE id = ${req.body.id}`)
+        res.json({ message: "palabra modificada" })
+    }catch(error){
+        return("Hubo un error")
+    }
+})
