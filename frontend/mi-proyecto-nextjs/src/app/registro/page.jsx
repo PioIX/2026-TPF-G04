@@ -11,11 +11,45 @@ export default function RegistroPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Aquí puedes ver los datos en la consola o enviarlos a tu API
-    console.log({ nombre, email, password });
-    alert("¡Formulario enviado con éxito!");
+
+    // Estructuramos los datos con las claves exactas que espera Express/Node.js
+    const datosUsuario = {
+      usuario: nombre,
+      contraseña: password,
+      email: email,
+      puntos_obtenidos: 0,
+      partidas_ganadas: 0,
+    };
+
+    try {
+      const respuesta = await fetch("http://localhost:4000/usuarios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(datosUsuario),
+      });
+
+      const resultado = await respuesta.json();
+
+      if (respuesta.ok) {
+        alert("¡Usuario registrado con éxito!");
+        console.log("Respuesta del servidor:", resultado);
+        
+        // Opcional: Limpiar el formulario
+        setNombre("");
+        setEmail("");
+        setPassword("");
+      } else {
+        alert("Hubo un error al registrar el usuario.");
+        console.error("Error del servidor:", resultado);
+      }
+    } catch (error) {
+      console.error("Error de conexión:", error);
+      alert("No se pudo conectar con el servidor backend (revisá que esté corriendo en el puerto 4000).");
+    }
   };
 
   return (
