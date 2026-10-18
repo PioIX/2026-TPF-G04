@@ -70,6 +70,45 @@ app.put('/usuarios', async function(req,res){
     }
 })
 
+
+///////// LOGIN
+app.post('/login', async function (req, res) {
+    try {
+        const { usuario, contraseña } = req.body;
+
+        // Validamos que se completen los campos
+        if (!usuario || !contraseña) {
+            return res.status(400).json({ mensaje: "Por favor ingresa usuario y contraseña" });
+        }
+
+        // Busca si ya existe un usuario con esa contraseña
+        let resultado = await realizarQuery(
+            `SELECT * FROM Usuarios WHERE usuario = '${usuario}' AND contraseña = '${contraseña}'`
+        );
+
+        if (resultado.length > 0) {
+            const usuarioEncontrado = resultado[0];
+
+            res.status(200).json({
+                mensaje: "Login exitoso",
+                usuario: {
+                    id: usuarioEncontrado.id,
+                    usuario: usuarioEncontrado.usuario,
+                    email: usuarioEncontrado.email,
+                    puntos_obtenidos: usuarioEncontrado.puntos_obtenidos,
+                    partidas_ganadas: usuarioEncontrado.partidas_ganadas
+                }
+            });
+        } else {
+            res.status(401).json({ mensaje: "Usuario o contraseña incorrectos" });
+        }
+    } catch (error) {
+        console.error("Error en /login:", error);
+        res.status(500).json({ mensaje: "Error en el servidor al intentar iniciar sesión" });
+    }
+});
+
+
 ///////// Puntos
 app.get('/puntos', async function (req, res) {
     try {
