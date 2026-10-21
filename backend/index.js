@@ -1,4 +1,4 @@
-// require('dotenv').config({ path: __dirname + '/.pio.env' })   
+require('dotenv').config({ path: __dirname + '/.pio.env' })   
 // require('dotenv').config({ path: __dirname + '/.home.env' })
 
 var express = require('express'); //Tipo de servidor: Express
