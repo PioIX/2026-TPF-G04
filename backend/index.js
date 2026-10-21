@@ -1,4 +1,4 @@
-// require('dotenv').config({ path: __dirname + '/.pio.env' })   
+require('dotenv').config({ path: __dirname + '/.pio.env' })   
 // require('dotenv').config({ path: __dirname + '/.home.env' })
 
 var express = require('express'); //Tipo de servidor: Express
@@ -100,7 +100,6 @@ app.post('/login', async function (req, res) {
 
         if (resultado.length > 0) {
             const usuarioEncontrado = resultado[0];
-
             res.status(200).json({
                 mensaje: "Login exitoso",
                 usuario: {
@@ -109,6 +108,7 @@ app.post('/login', async function (req, res) {
                     email: usuarioEncontrado.email,
                     puntos_obtenidos: usuarioEncontrado.puntos_obtenidos,
                     partidas_ganadas: usuarioEncontrado.partidas_ganadas
+
                 }
             });
         } else {

@@ -33,6 +33,8 @@ export default function Login() {
             if (response.ok) {
                 localStorage.setItem("usuario", JSON.stringify(data.usuario));
                 router.push("/"); 
+                console.log("Ha ingresado con éxito")
+
             } else {
                 setError(data.mensaje || "Datos incorrectos");
                 setCargando(false);
