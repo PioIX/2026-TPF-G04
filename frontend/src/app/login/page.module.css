@@ -1,8 +1,96 @@
-/* Next.js permite apuntar a 'a' si está dentro de una clase específica */
-.header a {
-  height: auto;
-  background: #2354bd;
-  color: #ffffff;
+/* Reseteo básico de margen */
+:global(body) {
+  margin: 0;
+  padding: 0;
+  background-color: #3b62c4;
+  font-family: sans-serif;
+  color: white;
+}
+
+/* Pantalla completa flex en columna */
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header arriba a los extremos */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: #2354bd;
+}
+
+.logo a, .navigation a {
+  color: white;
   text-decoration: none;
-  padding: 8px 16px;
+  font-weight: bold;
+}
+
+.navigation a {
+  margin-left: 20px;
+}
+
+/* Este es el truco: la zona central que empuja todo al medio */
+.mainContent {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+/* La cajita con el recuadro blanco centrado */
+.formCard {
+  border: 2px solid white;
+  padding: 40px 50px;
+  width: 100%;
+  max-width: 450px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* Distribución de los inputs adentro */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+  border-radius: 70%;
+
+}
+
+.input {
+  color:#ffffff;
+  border-radius: 70%;
+}
+
+/* Estilo para las etiquetas del Input (email / contraseña) */
+.label {
+  display: block;
+  text-align: left;
+  color: #ff9f1c;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+  font-family: var(--font-hammersmith), sans-serif;
+}
+
+/* Estilo para los campos de texto (Inputs) */
+.form input {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 30px; /* Bordes redondeados tipo píldora */
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  color: #333;
+  background-color: #ffffff;
+  box-sizing: border-box;
+}
+
+.form input::placeholder {
+  color: #888888;
 }

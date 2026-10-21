@@ -6,7 +6,18 @@ import Title from "../components/Title";
 import Input from "../components/Input";
 import Button from "../components/Button";
 import styles from "./page.module.css";
+import { Hammersmith_One, League_Spartan } from "next/font/google";
 
+const hammersmithOne = Hammersmith_One({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-hammersmith",
+});
+
+const leagueSpartan = League_Spartan({
+        subsets: ["latin"],
+        weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+    });
 
 export default function Login() {
     const [usuario, setUsuario] = useState("");
@@ -49,34 +60,40 @@ export default function Login() {
     };
 
     return (
-        <div>
-            <header id="a" className={styles.header}>
+        <div className={styles.container}>
+            <header className={styles.header}>
                 <div className={styles.logo}>
-                    <a href="#">MiSitio</a>
+                    <a href="#">PINTUPIO</a>
                 </div>
                 <nav className={styles.navigation}>
-                    <a href="#">Inicio</a>
-                    <a href="#">Servicios</a>
-                    <a href="#">Productos</a>
-                    <a href="#">Contacto</a>
+                    <a href="#">Iniciar sesión</a>
+                    <a href="#">Registrarse</a>
                 </nav>
             </header>
-            <Title text="Iniciar Sesión" />
-            <form onSubmit={handleSubmit}>
-                <Input
-                    label="Usuario"
-                    type="text"
-                    value={usuario}
-                    onChange={(e) => setUsuario(e.target.value)}
-                />
-                <Input
-                    label="Contraseña"
-                    type="password"
-                    value={contraseña}
-                    onChange={(e) => setContraseña(e.target.value)}
-                />
-                <Button text="Iniciar Sesión" type="submit" />
-            </form>
+
+            <main className={styles.mainContent}>
+                <div className={styles.formCard}>
+                    <Title text="INICIAR SESIÓN" />
+                    <form onSubmit={handleSubmit} className={styles.form}>
+                        <p className={styles.label}>Usuario</p>
+                        <Input
+                            className={styles.input}
+                            type="text"
+                            value={usuario}
+                            onChange={(e) => setUsuario(e.target.value)}
+                        />
+                        <p className={styles.label}>Contraseña</p>
+                        <Input
+                            className={styles.input}
+                            type="password"
+                            value={contraseña}
+                            onChange={(e) => setContraseña(e.target.value)}
+                        />
+                        {error && <p style={{ color: "#ffcdd2" }}>{error}</p>}
+                        <Button text="ENVIAR" type="submit" />
+                    </form>
+                </div>
+            </main>
         </div>
     );
 }
