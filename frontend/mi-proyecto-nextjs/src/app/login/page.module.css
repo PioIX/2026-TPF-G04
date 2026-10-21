@@ -1,0 +1,8 @@
+/* Next.js permite apuntar a 'a' si está dentro de una clase específica */
+.header a {
+  height: auto;
+  background: #2354bd;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 8px 16px;
+}
