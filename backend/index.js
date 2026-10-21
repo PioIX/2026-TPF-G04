@@ -5,6 +5,9 @@ var express = require('express'); //Tipo de servidor: Express
 var bodyParser = require('body-parser'); //Convierte los JSON
 var cors = require('cors');
 const { realizarQuery } = require('./modulos/mysql');
+const session = require('express-session');
+const { Server } = require('socket.io');
+
 
 var app = express(); //Inicializo express
 var port = process.env.PORT || 4000; //Ejecuto el servidor en el puerto 4000
@@ -14,10 +17,18 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
 
-//Pongo el servidor a escuchar
-app.listen(port, function () {
-    console.log(`Server running in http://localhost:${port}`);
+// Reconoce al usuario que inició sesión
+const sessionMiddleware = session({
+  secret: "supersarasa",
+  resave: false,
+  saveUninitialized: false,
 });
+app.use(sessionMiddleware);
+
+const server = app.listen(port, () => {
+  console.log(`Servidor NodeJS corriendo en http://localhost:${port}/`);
+});
+
 
 app.get('/', function (req, res) {
     res.status(200).send({
@@ -56,7 +67,8 @@ app.delete('/usuarios', async function(req,res){
         let respuesta = await realizarQuery(`DELETE FROM Usuarios WHERE id = ${req.body.id}`)
         res.json({ message: "Usuario eliminado" })
     }catch(error){
-        return ("Hubo un error")
+        console.error(error);
+        res.status(500).json({ mensaje: "Hubo un error" });
     }
 })
 
@@ -69,6 +81,45 @@ app.put('/usuarios', async function(req,res){
         return("Hubo un error")
     }
 })
+
+
+///////// LOGIN
+app.post('/login', async function (req, res) {
+    try {
+        const { usuario, contraseña } = req.body;
+
+        // Validamos que se completen los campos
+        if (!usuario || !contraseña) {
+            return res.status(400).json({ mensaje: "Por favor ingresa usuario y contraseña" });
+        }
+
+        // Busca si ya existe un usuario con esa contraseña
+        let resultado = await realizarQuery(
+            `SELECT * FROM Usuarios WHERE usuario = '${usuario}' AND contraseña = '${contraseña}'`
+        );
+
+        if (resultado.length > 0) {
+            const usuarioEncontrado = resultado[0];
+            res.status(200).json({
+                mensaje: "Login exitoso",
+                usuario: {
+                    id: usuarioEncontrado.id,
+                    usuario: usuarioEncontrado.usuario,
+                    email: usuarioEncontrado.email,
+                    puntos_obtenidos: usuarioEncontrado.puntos_obtenidos,
+                    partidas_ganadas: usuarioEncontrado.partidas_ganadas
+
+                }
+            });
+        } else {
+            res.status(401).json({ mensaje: "Usuario o contraseña incorrectos" });
+        }
+    } catch (error) {
+        console.error("Error en /login:", error);
+        res.status(500).json({ mensaje: "Error en el servidor al intentar iniciar sesión" });
+    }
+});
+
 
 ///////// Puntos
 app.get('/puntos', async function (req, res) {
@@ -99,7 +150,8 @@ app.delete('/puntos', async function(req,res){
         let respuesta = await realizarQuery(`DELETE FROM Puntos WHERE id = ${req.body.id}`)
         res.json({ message: "Puntos eliminados" })
     }catch(error){
-        return ("Hubo un error")
+        console.error(error);
+        res.status(500).json({ mensaje: "Hubo un error" });
     }
 })
 
@@ -127,7 +179,7 @@ app.get('/partidas', async function (req, res) {
 
 app.post('/partidas', async function (req, res) {
     try {
-        await realizarQuery(`INSERT INTO Puntos (rondas, usuario_ganador) VALUES
+        await realizarQuery(`INSERT INTO Partidas (rondas, usuario_ganador) VALUES
             ('${req.body.rondas}', '${req.body.usuario_ganador}')`);
         res.status(201).json({ mensaje: "Partida creada con éxito" });
     } catch (error) {
@@ -141,7 +193,8 @@ app.delete('/partidas', async function(req,res){
         let respuesta = await realizarQuery(`DELETE FROM Partidas WHERE id = ${req.body.id}`)
         res.json({ message: "Partida eliminada" })
     }catch(error){
-        return ("Hubo un error")
+        console.error(error);
+        res.status(500).json({ mensaje: "Hubo un error" });
     }
 })
 
@@ -182,7 +235,8 @@ app.delete('/palabras', async function(req,res){
         let respuesta = await realizarQuery(`DELETE FROM Palabras WHERE id = ${req.body.id}`)
         res.json({ message: "palabra eliminada" })
     }catch(error){
-        return ("Hubo un error")
+        console.error(error);
+        res.status(500).json({ mensaje: "Hubo un error" });
     }
 })
 
@@ -194,3 +248,68 @@ app.put('/palabras', async function(req,res){
         return("Hubo un error")
     }
 })
+
+
+/// Socket
+
+// Se inicializa el servidor de comunicación en tiempo real con Socket.IO
+const io = new Server(server, { // Con "server" toma el servidor que escucha en el puerto 4000 y le otorga la capacidad del socket
+  cors: {
+    origin: ["http://localhost:3000", "http://localhost:3001"], // Establece sus clientes
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, // Para que el middleware reconozca a cada usuario
+  },
+});
+
+// Conecta las sesiones de express y de socket para saber que usuario está conectado a través del socket
+// ¿Para qué?
+// Para saber, por ejemplo, quien envía un mensaje o quien gana la partida
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
+
+
+let contador = 0;
+
+io.on("connection", (socket) => {
+  const req = socket.request;
+
+  socket.on("joinRoom", (data) => {
+
+    if (req.session.room != undefined && req.session.room.length > 0) {
+      socket.leave(req.session.room);
+    }
+
+    req.session.room = data.room;
+    req.session.save();
+
+    req.session.room = data.room;
+    socket.join(req.session.room);
+
+    io.to(req.session.room).emit("chat-messages", {
+      user: req.session.user,
+      room: req.session.room,
+    });
+  });
+
+  socket.on("pingAll", (data) => {
+    console.log("PING ALL:", data);
+    io.emit("pingAll", { event: "Ping to all", message: data });
+  });
+
+  socket.on("sendMessage", (data) => {
+    io.to(req.session.room).emit("newMessage", {
+      room: req.session.room,
+      message: data.message,
+    });
+  });
+
+  socket.on("eventoPersonalizado", () => {
+    contador++;
+    socket.emit("respuestaPersonalizada", { contador });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Disconnect");
+  });
+});
