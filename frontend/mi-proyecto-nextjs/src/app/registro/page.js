@@ -5,6 +5,7 @@ import Title from "../components/Title";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
+
 export default function RegistroPage() {
   // 1. Definimos los estados para cada campo
   const [nombre, setNombre] = useState("");
