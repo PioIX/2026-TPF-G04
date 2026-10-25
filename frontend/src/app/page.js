@@ -8,15 +8,10 @@ const knewave = Knewave({
 });
 
 export default function Home() {
-
   return (
-    <div className={styles.contenedor}>ç
-
-      
-      {/* 1. Imagen que ocupa todo el fondo */}
+    <div className={styles.contenedor}>
       <img src="/banner.png" alt="Fondo" className={styles.imagenFondo} />
 
-      {/* 2. Contenido que se coloca POR ENCIMA */}
       <div className={styles.contenido}>
         <h1 className={knewave.className}>PINTUPIO</h1>
 
