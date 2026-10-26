@@ -49,6 +49,39 @@ app.get('/usuarios', async function (req, res) {
     }
 });
 
+
+// Obtener TOP 5 usuarios con MEJOR PUNTAJE
+app.get('/ranking/puntaje', async function (req, res) {
+    try {
+        let respuesta = await realizarQuery(`
+            SELECT usuario, puntos_obtenidos 
+            FROM Usuarios 
+            ORDER BY puntos_obtenidos DESC 
+            LIMIT 5
+        `);
+        res.status(200).json(respuesta);
+    } catch (error) {
+        console.error("Error en /ranking/puntaje:", error);
+        res.status(500).json({ mensaje: "Hubo un error al obtener el ranking de puntos" });
+    }
+});
+
+// Obtener TOP 5 usuarios con MÁS PARTIDAS GANADAS
+app.get('/ranking/ganadas', async function (req, res) {
+    try {
+        let respuesta = await realizarQuery(`
+            SELECT usuario, partidas_ganadas 
+            FROM Usuarios 
+            ORDER BY partidas_ganadas DESC 
+            LIMIT 5
+        `);
+        res.status(200).json(respuesta);
+    } catch (error) {
+        console.error("Error en /ranking/ganadas:", error);
+        res.status(500).json({ mensaje: "Hubo un error al obtener el ranking de victorias" });
+    }
+});
+
 //Se agrega un nuevo usuario
 app.post('/usuarios', async function (req, res) {
     try {
@@ -313,3 +346,4 @@ io.on("connection", (socket) => {
     console.log("Disconnect");
   });
 });
+

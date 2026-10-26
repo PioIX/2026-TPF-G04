@@ -45,7 +45,7 @@ https://canva.link/isrbpnny3a8bp8q
 | Página principal (tablas de clasificación) | Pujana | 24/10 |
 | Juego: número de sala, la ronda actual y lienzo de dibujo | Panelli | 30/10 |
 | Juego: chat con `socket`, puntos del usuario y temporizador *(una vez terminada la partida, aparecen los puntos de todos los usuarios de la sala)* | Maggiolo | 06/11 |
-| `CSS` general | Maggiolo | 12/11 |
-| `CSS` página de juego | Panelli | 12/11 |
+| `CSS` general | Maggiolo y Panelli | 12/11 |
+| `CSS` página de juego | Maggiolo y Panelli | 12/11 |
 | OPCIONAL: revisión general final (correcciones) | Todos los integrantes | 16/11 |
 | **EXPOPIO** | Todos los integrantes | 20/11 |
