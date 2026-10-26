@@ -42,16 +42,25 @@ export default function Login() {
             });
 
             const data = await response.json();
-
+            
             if (response.ok) {
                 localStorage.setItem("usuario", JSON.stringify(data.usuario));
-                router.push("/");
-                console.log("Ha ingresado con éxito")
 
+                if(usuario ==="admin" && contraseña ==="admin123"){    
+                    router.push("/admin")
+                }else{
+                    router.push("/principal");
+                    console.log("Ha ingresado con éxito")
+
+                    setUsuario("");
+                    setContraseña("");
+                }
+                
             } else {
                 setError(data.mensaje || "Datos incorrectos");
                 setCargando(false);
             }
+
         } catch (err) {
             console.error(err);
             setError("No se pudo conectar con el servidor (puerto 4000)");
