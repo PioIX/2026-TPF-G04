@@ -1,10 +1,25 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { useRouter } from "next/navigation";
 
 export default function Admin(){
+    const [usuarios, setUsuarios] = useState([]);
     
+    useEffect(() => {
+        async function obtenerUsuarios() {
+            try {
+                const res = await fetch('http://localhost:4000/admin/usuarios'); 
+                const data = await res.json();
+                setUsuarios(data);
+            } catch (error) {
+                console.error("Error al obtener los usuarios:", error);
+            }
+        }
+
+        obtenerUsuarios();
+    }, []);
+
     return(<>
         <div>
             <h1>USUARIOS</h1>
@@ -21,12 +36,20 @@ export default function Admin(){
                     </tr>
                 </thead>
                 <tbody id="tabla-usuarios">
-
+                    {usuarios.map((u, index) => (
+                            <tr key={u.id || index}>
+                                <td>{u.usuario}</td>
+                                <td>{u.contraseña}</td>
+                                <td>{u.email}</td>
+                                <td>{u.puntos_obtenidos}</td>
+                                <td>{u.partidas_ganadas}</td>
+                                <td>{u.es_admin ? "Sí" : "No"}</td>
+                            </tr>
+                        ))}
                 </tbody>
             </table>
         </div>
         <div>
-
 
         </div>
         <div>
