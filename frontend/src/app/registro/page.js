@@ -17,7 +17,6 @@ export default function RegistroPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Estructuramos los datos con las claves exactas que espera Express/Node.js
     const datosUsuario = {
       usuario: nombre,
       contraseña: password,
@@ -40,8 +39,12 @@ export default function RegistroPage() {
       if (respuesta.ok) {
         alert("¡Usuario registrado con éxito!");
         console.log("Respuesta del servidor:", resultado);
+<<<<<<< HEAD:frontend/mi-proyecto-nextjs/src/app/registro/page.js
+        
+=======
         router.push("/login");
         // limpia el formulario
+>>>>>>> a5d17832399ee72e6e776a9cc1dd0aaa6ef1f7a8:frontend/src/app/registro/page.js
         setNombre("");
         setEmail("");
         setPassword("");
