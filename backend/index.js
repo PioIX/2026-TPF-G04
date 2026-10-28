@@ -158,7 +158,7 @@ app.post('/login', async function (req, res) {
 ///ADMIN
 //  USUARIOS
 //Traemos todo de los usuarios
-app.get('/usuarios', async function (req, res) {
+app.get('/admin/usuarios', async function (req, res) {
     try {
         let respuesta = await realizarQuery(`SELECT * FROM Usuarios`)
         res.status(200).json(respuesta)
@@ -169,7 +169,7 @@ app.get('/usuarios', async function (req, res) {
 });
 
 //Se agrega un nuevo usuario
-app.post('/usuarios', async function (req, res) {
+app.post('/admin/usuarios', async function (req, res) {
     try {
         await realizarQuery(`INSERT INTO Usuarios (usuario, contraseña, email,puntos_obtenidos, partidas_ganadas, es_admin) VALUES
             ('${req.body.usuario}', '${req.body.contraseña}', '${req.body.email}', '${req.body.puntos_obtenidos}', '${req.body.partidas_ganadas}', '${req.body.es_admin}')`);
@@ -181,22 +181,22 @@ app.post('/usuarios', async function (req, res) {
 });
 
 //Elimina el usuario segun su id
-app.delete('/usuarios', async function(req,res){
+app.delete('/admin/usuarios', async function(req,res){
     try{
         let respuesta = await realizarQuery(`DELETE FROM Usuarios WHERE id = ${req.body.id_usuario}`)
         res.json({ message: "Usuario eliminado" })
     }catch(error){
-        return ("Hubo un error")
+        res.status(500).json({ mensaje: "Error"})
     }
 })
 
 //Modifica datos del usuario
-app.put('/usuarios', async function(req,res){
+app.put('/admin/usuarios', async function(req,res){
     try{
         let respuesta = await realizarQuery(`UPDATE Usuarios SET ${req.body.modificacion} = '${req.body.valor}' WHERE id = ${req.body.id_usuario}`)
         res.json({ message: "Usuario modificado" })
     }catch(error){
-        return("Hubo un error")
+        res.status(500).json({ mensaje: "Error"})
     }
 })
 
