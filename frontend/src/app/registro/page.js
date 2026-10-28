@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"
 import Title from "../components/Title";
 import Input from "../components/Input";
 import Button from "../components/Button";
+
 
 export default function RegistroPage() {
   // 1. Definimos los estados para cada campo
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +39,12 @@ export default function RegistroPage() {
       if (respuesta.ok) {
         alert("¡Usuario registrado con éxito!");
         console.log("Respuesta del servidor:", resultado);
+<<<<<<< HEAD:frontend/mi-proyecto-nextjs/src/app/registro/page.js
         
+=======
+        router.push("/login");
+        // limpia el formulario
+>>>>>>> a5d17832399ee72e6e776a9cc1dd0aaa6ef1f7a8:frontend/src/app/registro/page.js
         setNombre("");
         setEmail("");
         setPassword("");

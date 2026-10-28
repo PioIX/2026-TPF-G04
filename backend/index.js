@@ -49,6 +49,39 @@ app.get('/usuarios', async function (req, res) {
     }
 });
 
+
+// Obtener TOP 5 usuarios con MEJOR PUNTAJE
+app.get('/ranking/puntaje', async function (req, res) {
+    try {
+        let respuesta = await realizarQuery(`
+            SELECT usuario, puntos_obtenidos 
+            FROM Usuarios 
+            ORDER BY puntos_obtenidos DESC 
+            LIMIT 5
+        `);
+        res.status(200).json(respuesta);
+    } catch (error) {
+        console.error("Error en /ranking/puntaje:", error);
+        res.status(500).json({ mensaje: "Hubo un error al obtener el ranking de puntos" });
+    }
+});
+
+// Obtener TOP 5 usuarios con MÁS PARTIDAS GANADAS
+app.get('/ranking/ganadas', async function (req, res) {
+    try {
+        let respuesta = await realizarQuery(`
+            SELECT usuario, partidas_ganadas 
+            FROM Usuarios 
+            ORDER BY partidas_ganadas DESC 
+            LIMIT 5
+        `);
+        res.status(200).json(respuesta);
+    } catch (error) {
+        console.error("Error en /ranking/ganadas:", error);
+        res.status(500).json({ mensaje: "Hubo un error al obtener el ranking de victorias" });
+    }
+});
+
 //Se agrega un nuevo usuario
 app.post('/usuarios', async function (req, res) {
     try {
@@ -114,12 +147,58 @@ app.post('/login', async function (req, res) {
         } else {
             res.status(401).json({ mensaje: "Usuario o contraseña incorrectos" });
         }
+
+        
     } catch (error) {
         console.error("Error en /login:", error);
         res.status(500).json({ mensaje: "Error en el servidor al intentar iniciar sesión" });
     }
 });
 
+///ADMIN
+//  USUARIOS
+//Traemos todo de los usuarios
+app.get('/usuarios', async function (req, res) {
+    try {
+        let respuesta = await realizarQuery(`SELECT * FROM Usuarios`)
+        res.status(200).json(respuesta)
+    } catch (error) {
+        console.error("Error en /usuarios:", error)
+        res.status(500).json({ mensaje: "Hubo un error al obtener los usuarios" })
+    }
+});
+
+//Se agrega un nuevo usuario
+app.post('/usuarios', async function (req, res) {
+    try {
+        await realizarQuery(`INSERT INTO Usuarios (usuario, contraseña, email,puntos_obtenidos, partidas_ganadas, es_admin) VALUES
+            ('${req.body.usuario}', '${req.body.contraseña}', '${req.body.email}', '${req.body.puntos_obtenidos}', '${req.body.partidas_ganadas}', '${req.body.es_admin}')`);
+        res.status(201).json({ mensaje: "Usuario creado con éxito" });
+    } catch (error) {
+        console.error("Error en /usuarios:", error);
+        res.status(500).json({ mensaje: "Hubo un error al crear el usuario" });
+    }
+});
+
+//Elimina el usuario segun su id
+app.delete('/usuarios', async function(req,res){
+    try{
+        let respuesta = await realizarQuery(`DELETE FROM Usuarios WHERE id = ${req.body.id_usuario}`)
+        res.json({ message: "Usuario eliminado" })
+    }catch(error){
+        return ("Hubo un error")
+    }
+})
+
+//Modifica datos del usuario
+app.put('/usuarios', async function(req,res){
+    try{
+        let respuesta = await realizarQuery(`UPDATE Usuarios SET ${req.body.modificacion} = '${req.body.valor}' WHERE id = ${req.body.id_usuario}`)
+        res.json({ message: "Usuario modificado" })
+    }catch(error){
+        return("Hubo un error")
+    }
+})
 
 ///////// Puntos
 app.get('/puntos', async function (req, res) {

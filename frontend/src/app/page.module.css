@@ -50,6 +50,22 @@
   gap: 25px;
 }
 
+.contenido h1 {
+  font-size: 8rem; /* 👈 Aumenta o disminuye este valor (ej: 4rem, 6rem) */
+  font-weight: bold;
+  letter-spacing: 2px; /* Separa un poco las letras si quieres */
+  text-align: center;
+  margin-bottom: 2rem;
+  
+  /* Opcional: Agregar sombra para que resalte más sobre el fondo */
+  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
+
+    -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+
 .titulo {
   font-size: 4.5rem;
   color: #fffde7;
