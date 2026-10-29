@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"
 import Title from "../components/Title";
 import Input from "../components/Input";
 import Button from "../components/Button";
@@ -11,11 +12,11 @@ export default function RegistroPage() {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Estructuramos los datos con las claves exactas que espera Express/Node.js
     const datosUsuario = {
       usuario: nombre,
       contraseña: password,
@@ -38,8 +39,8 @@ export default function RegistroPage() {
       if (respuesta.ok) {
         alert("¡Usuario registrado con éxito!");
         console.log("Respuesta del servidor:", resultado);
-        
-        // Opcional: Limpiar el formulario
+        router.push("/login");
+        // limpia el formulario
         setNombre("");
         setEmail("");
         setPassword("");
