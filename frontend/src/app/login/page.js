@@ -46,7 +46,7 @@ export default function Login() {
             if (response.ok) {
                 localStorage.setItem("usuario", JSON.stringify(data.usuario));
 
-                if(usuario ==="admin" && contraseña ==="admin123"){    
+                if(usuario ==="admin" && contraseña ==="admin67"){    
                     router.push("/admin")
                 }else{
                     router.push("/principal");
