@@ -39,8 +39,31 @@ export default function Admin() {
     const [partidaAEliminar, setPartidaAEliminar] = useState("");
     //// Puntos
     const [puntos, setPuntos] = useState([]);
+    const [puntoElegido, setPuntoElegido] = useState(null);
+    const [datosPuntos, setDatosPuntos] = useState({
+        id_usuario: "",
+        id_partida: "",
+        puntos_obtenidos: "",
+    });
+    const [nuevosPuntos, setNuevosPuntos] = useState({
+        id_usuario: "",
+        id_partida: "",
+        puntos_obtenidos: "",
+    });
+    const [puntosAEliminar, setPuntosAEliminar] = useState("");
     //// Palabras
     const [palabras, setPalabras] = useState([]);
+    const [palabraElegida, setPalabraElegida] = useState(null);
+    const [datosPalabras, setDatosPalabras] = useState({
+        palabra: "",
+        id_palabra: "",
+    });
+    const [nuevaPalabra, setNuevaPalabra] = useState({
+        palabra: "",
+        id_palabra: "",
+    });
+    const [palabraAEliminar, setPalabraAEliminar] = useState("");
+
 
     //// OBTENER USUARIOS
     async function obtenerUsuarios() {
@@ -278,6 +301,82 @@ export default function Admin() {
     useEffect(() => {
         obtenerPuntos();
     }, []);
+
+    ///// MODIFICAR PUNTOS
+    function elegirPuntos(p) {
+        setPuntoElegido(p);
+        setDatosPuntos({
+            id_usuario: p.id_usuario || "",
+            id_partida: p.id_partida || "",
+            puntos_obtenidos: p.puntos_obtenidos || "",
+        });
+    }
+
+    function cambiarDatosPuntos(e) {
+        const { name, value } = e.target;
+        setDatosPuntos({ ...datosPuntos, [name]: value });
+    }
+
+    function cambiarNuevosPuntos(e) {
+        const { name, value } = e.target;
+        setNuevosPuntos({ ...nuevosPuntos, [name]: value });
+    }
+
+    // CAMBIAR PUNTOS
+    function guardarPuntos(e) {
+        e.preventDefault();
+        if (!puntoElegido) return;
+        const idOriginal = puntoElegido.id;
+
+        fetch("http://localhost:4000/admin/puntos", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ id: idOriginal, ...datosPuntos }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.mensaje);
+                setPuntos(puntos.map(p =>
+                    p.id === idOriginal ? { ...p, ...datosPuntos } : p
+                ));
+                setPuntoElegido(null);
+            })
+            .catch(error => console.error("Error al modificar puntos:", error));
+    }
+
+    // CREAR PUNTOS
+    function crearPuntos(e) {
+        e.preventDefault();
+        fetch("http://localhost:4000/admin/puntos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(nuevosPuntos),
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.mensaje);
+                setNuevosPuntos({ id_usuario: "", id_partida: "", puntos_obtenidos: "" });
+            })
+            .catch(error => console.error("Error al crear puntos:", error));
+    }
+
+    // ELIMINAR PUNTOS
+    function eliminarPuntos(id) {
+        fetch("http://localhost:4000/admin/puntos", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ id }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.mensaje);
+                setPuntos(puntos.filter(p => p.id !== id));
+            })
+            .catch(error => console.error("Error al eliminar puntos:", error));
+    }
     ///// OBTENER PALABRAS
     async function obtenerPalabras() {
         try {
@@ -291,6 +390,84 @@ export default function Admin() {
     useEffect(() => {
         obtenerPalabras();
     }, []);
+    //  MODIFICAR PALABRA
+    function elegirPalabra(p) {
+        setPalabraElegida(p);
+        setDatosPalabras({
+            palabra: p.palabra || "",
+            id_partida: p.id_partida || "",
+        });
+    }
+
+    function cambiarDatosPalabras(e) {
+        const { name, value } = e.target;
+        setDatosPalabras({ ...datosPalabras, [name]: value });
+    }
+
+    function cambiarNuevaPalabra(e) {
+        const { name, value } = e.target;
+        setNuevaPalabra({ ...nuevaPalabra, [name]: value });
+    }
+
+    function guardarPalabra(e) {
+        e.preventDefault();
+        if (!palabraElegida) return;
+        const idOriginal = palabraElegida.id_palabra || palabraElegida.id;
+
+        fetch("http://localhost:4000/admin/palabras", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ id: idOriginal, ...datosPalabras }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.mensaje);
+                setPalabras(palabras.map(p =>
+                    (p.id_palabra === idOriginal || p.id === idOriginal) ? { ...p, ...datosPalabras } : p
+                ));
+                setPalabraElegida(null);
+            })
+            .catch(error => console.error("Error al modificar la palabra:", error));
+    }
+
+    // CREAR PALABRA
+    function crearPalabra(e) {
+        e.preventDefault();
+        fetch("http://localhost:4000/admin/palabras", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(nuevaPalabra),
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.mensaje);
+                setNuevaPalabra({ palabra: "", id_partida: "" });
+            })
+            .catch(error => console.error("Error al crear la palabra:", error));
+    }
+
+    // ELIMINAR PALABRA
+    function eliminarPalabra(e) {
+        e.preventDefault();
+        if (!palabraAEliminar) return;
+
+        fetch("http://localhost:4000/admin/palabras", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ id: palabraAEliminar }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.mensaje);
+                setPalabras(palabras.filter(p => (p.id_palabra || p.id) !== Number(palabraAEliminar)));
+                setPalabraAEliminar("");
+            })
+            .catch(error => console.error("Error al eliminar la palabra:", error));
+    }
+
     return (<>
         {/* USUARIOS */}
         <div>
@@ -487,21 +664,121 @@ export default function Admin() {
         </div>
         {/* PUNTOS */}
         <div>
-            <div>
-                <h1>PUNTOS</h1>
-                <h2>Traer puntos</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>id_puntos</th>
-                            <th>id_usuario</th>
-                            <th>id_partida</th>
-                            <th>puntos_obtenidos</th>
+            <h1>PUNTOS</h1>
+            <h2>Traer puntos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>id_puntos</th>
+                        <th>id_usuario</th>
+                        <th>id_partida</th>
+                        <th>puntos_obtenidos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {puntos.map((p, index) => (
+                        <tr
+                            key={`punto-${p.id || p.id_puntos || index}`}
+                            onClick={() => elegirPuntos(p)}
+                            style={{ cursor: "pointer" }}
+                        >
+                            <td>{p.id || p.id_puntos}</td>
+                            <td>{p.id_usuario}</td>
+                            <td>{p.id_partida}</td>
+                            <td>{p.puntos_obtenidos}</td>
                         </tr>
-                    </thead>
-                </table>
+                    ))}
+                </tbody>
+            </table>
+
+            {puntoElegido !== null && (
+                <div>
+                    <h2>Modificar puntos</h2>
+                    <form onSubmit={guardarPuntos}>
+                        <input
+                            name="id_usuario"
+                            type="number"
+                            value={datosPuntos.id_usuario}
+                            onChange={cambiarDatosPuntos}
+                            placeholder="ID Usuario"
+                            required
+                        />
+                        <input
+                            name="id_partida"
+                            type="number"
+                            value={datosPuntos.id_partida}
+                            onChange={cambiarDatosPuntos}
+                            placeholder="ID Partida"
+                            required
+                        />
+                        <input
+                            name="puntos_obtenidos"
+                            type="number"
+                            value={datosPuntos.puntos_obtenidos}
+                            onChange={cambiarDatosPuntos}
+                            placeholder="Puntos obtenidos"
+                            required
+                        />
+                        <button type="submit">Guardar cambios</button>
+                        <button type="button" onClick={() => setPuntoElegido(null)}>Cancelar</button>
+                    </form>
+                </div>
+            )}
+
+            <div>
+                <h2>Agregar puntos</h2>
+                <form onSubmit={crearPuntos}>
+                    <input
+                        name="id_usuario"
+                        type="number"
+                        value={nuevosPuntos.id_usuario}
+                        onChange={cambiarNuevosPuntos}
+                        placeholder="ID Usuario"
+                        required
+                    />
+                    <input
+                        name="id_partida"
+                        type="number"
+                        value={nuevosPuntos.id_partida}
+                        onChange={cambiarNuevosPuntos}
+                        placeholder="ID Partida"
+                        required
+                    />
+                    <input
+                        name="puntos_obtenidos"
+                        type="number"
+                        value={nuevosPuntos.puntos_obtenidos}
+                        onChange={cambiarNuevosPuntos}
+                        placeholder="Puntos obtenidos"
+                        required
+                    />
+                    <button type="submit">Crear puntos</button>
+                </form>
+            </div>
+
+            <div>
+                <h2>Eliminar puntos</h2>
+                <form onSubmit={eliminarPuntos}>
+                    <select
+                        value={puntosAEliminar}
+                        onChange={(e) => setPuntosAEliminar(e.target.value)}
+                        required
+                    >
+                        <option value="" disabled>Selecciona un registro a eliminar</option>
+                        {puntos.map((p, index) => (
+                            <option
+                                key={`del-punto-${p.id || p.id_puntos || index}`}
+                                value={p.id || p.id_puntos}
+                            >
+                                Punto ID: {p.id || p.id_puntos} (Usuario: {p.id_usuario} - Puntos: {p.puntos_obtenidos})
+                            </option>
+                        ))}
+                    </select>
+                    <button type="submit">Eliminar puntos</button>
+                </form>
             </div>
         </div>
+
         {/* PALABRAS */}
         <div>
             <div>
@@ -515,9 +792,90 @@ export default function Admin() {
                             <th>id_partida</th>
                         </tr>
                     </thead>
+                    <tbody>
+                        {palabras.map((p, index) => (
+                            <tr
+                                key={`palabra-${p.id_palabra || p.id || index}`}
+                                onClick={() => elegirPalabra(p)}
+                                style={{ cursor: "pointer" }}
+                            >
+                                <td>{p.id_palabra || p.id}</td>
+                                <td>{p.palabra}</td>
+                                <td>{p.id_partida}</td>
+                            </tr>
+                        ))}
+                    </tbody>
                 </table>
+
+                {palabraElegida !== null && (
+                    <div>
+                        <h2>Modificar palabra</h2>
+                        <form onSubmit={guardarPalabra}>
+                            <input
+                                name="palabra"
+                                value={datosPalabras.palabra}
+                                onChange={cambiarDatosPalabras}
+                                placeholder="Palabra"
+                                required
+                            />
+                            <input
+                                name="id_partida"
+                                type="number"
+                                value={datosPalabras.id_partida}
+                                onChange={cambiarDatosPalabras}
+                                placeholder="ID Partida"
+                                required
+                            />
+                            <button type="submit">Guardar cambios</button>
+                            <button type="button" onClick={() => setPalabraElegida(null)}>Cancelar</button>
+                        </form>
+                    </div>
+                )}
+
+                <div>
+                    <h2>Agregar palabra</h2>
+                    <form onSubmit={crearPalabra}>
+                        <input
+                            name="palabra"
+                            value={nuevaPalabra.palabra}
+                            onChange={cambiarNuevaPalabra}
+                            placeholder="Palabra"
+                            required
+                        />
+                        <input
+                            name="id_partida"
+                            type="number"
+                            value={nuevaPalabra.id_partida}
+                            onChange={cambiarNuevaPalabra}
+                            placeholder="ID Partida"
+                            required
+                        />
+                        <button type="submit">Crear palabra</button>
+                    </form>
+                </div>
+
+                <div>
+                    <h2>Eliminar palabra</h2>
+                    <form onSubmit={eliminarPalabra}>
+                        <select
+                            value={palabraAEliminar}
+                            onChange={(e) => setPalabraAEliminar(e.target.value)}
+                            required
+                        >
+                            <option value="" disabled>Selecciona una palabra a eliminar</option>
+                            {palabras.map((p, index) => (
+                                <option
+                                    key={`del-palabra-${p.id_palabra || p.id || index}`}
+                                    value={p.id_palabra || p.id}
+                                >
+                                    Palabra ID: {p.id_palabra || p.id} ("{p.palabra}")
+                                </option>
+                            ))}
+                        </select>
+                        <button type="submit">Eliminar palabra</button>
+                    </form>
+                </div>
             </div>
         </div>
-
     </>)
 }

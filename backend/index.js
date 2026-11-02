@@ -1,5 +1,5 @@
-// require('dotenv').config({ path: __dirname + '/.pio.env' })
-require('dotenv').config({ path: __dirname + '/.home.env' })
+require('dotenv').config({ path: __dirname + '/.pio.env' })
+// require('dotenv').config({ path: __dirname + '/.home.env' })
 
 var express = require('express'); //Tipo de servidor: Express
 var bodyParser = require('body-parser'); //Convierte los JSON
@@ -238,36 +238,46 @@ app.get('/admin/puntos', async function (req, res) {
 
 //Se agregan nuevos puntos
 app.post('/admin/puntos', async function (req, res) {
+    const { id_partida, id_usuario, puntos_obtenidos } = req.body;
     try {
-        await realizarQuery(`INSERT INTO Puntos (id_partida, id_usuario, puntos_obtenidos) VALUES
-            ('${req.body.id_partida}', '${req.body.id_usuario}', '${req.body.puntos_obtenidos}')`);
-        res.status(201).json({ mensaje: "Puntos creado con éxito" });
+        await realizarQuery(
+            `INSERT INTO Puntos (id_partida, id_usuario, puntos_obtenidos) 
+             VALUES ('${id_partida}', '${id_usuario}', '${puntos_obtenidos}')`
+        );
+        res.status(201).json({ mensaje: "Puntos creados con éxito" });
     } catch (error) {
-        console.error("Error en /puntos:", error);
+        console.error("Error en POST /admin/puntos:", error);
         res.status(500).json({ mensaje: "Hubo un error al crear los puntos" });
     }
 });
 
-//Elimina puntos
+// Eliminar puntos por ID
 app.delete('/admin/puntos', async function (req, res) {
+    const { id } = req.body;
     try {
-        let respuesta = await realizarQuery(`DELETE FROM Puntos WHERE id = ${req.body.id}`)
-        res.json({ message: "Puntos eliminados" })
+        await realizarQuery(`DELETE FROM Puntos WHERE id = ${id}`);
+        res.status(200).json({ mensaje: "Puntos eliminados con éxito" });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ mensaje: "Hubo un error" });
+        console.error("Error en DELETE /admin/puntos:", error);
+        res.status(500).json({ mensaje: "Hubo un error al eliminar los puntos" });
     }
-})
+});
 
-//Modifica datos de los puntos
+// Modificar puntos
 app.put('/admin/puntos', async function (req, res) {
+    const { id, id_partida, id_usuario, puntos_obtenidos } = req.body;
     try {
-        let respuesta = await realizarQuery(`UPDATE Puntos SET ${req.body.modificacion} = '${req.body.valor}' WHERE id = ${req.body.id}`)
-        res.json({ message: "Puntos modificados" })
+        await realizarQuery(
+            `UPDATE Puntos 
+             SET id_partida = '${id_partida}', id_usuario = '${id_usuario}', puntos_obtenidos = '${puntos_obtenidos}' 
+             WHERE id = ${id}`
+        );
+        res.status(200).json({ mensaje: "Puntos modificados con éxito" });
     } catch (error) {
-        return ("Hubo un error")
+        console.error("Error en PUT /admin/puntos:", error);
+        res.status(500).json({ mensaje: "Hubo un error al modificar los puntos" });
     }
-})
+});
 
 ///////// Partidas
 
@@ -320,43 +330,56 @@ app.put('/admin/partidas/:id', async function (req, res) {
 
 app.get('/admin/palabras', async function (req, res) {
     try {
-        let respuesta = await realizarQuery(`SELECT * FROM Palabras`)
-        res.status(200).json(respuesta)
+        let respuesta = await realizarQuery(`SELECT * FROM Palabras`);
+        res.status(200).json(respuesta);
     } catch (error) {
-        console.error("Error en /palabras:", error)
-        res.status(500).json({ mensaje: "Hubo un error al obtener las palabras" })
+        console.error("Error en GET /admin/palabras:", error);
+        res.status(500).json({ mensaje: "Hubo un error al obtener las palabras" });
     }
 });
 
+// Agregar nueva palabra
 app.post('/admin/palabras', async function (req, res) {
+    const { palabra, id_partida } = req.body;
     try {
-        await realizarQuery(`INSERT INTO Palabras (palabra, id_partida) VALUES
-            ('${req.body.palabra}', '${req.body.id_partida}')`);
+        await realizarQuery(
+            `INSERT INTO Palabras (palabra, id_partida) 
+             VALUES ('${palabra}', '${id_partida}')`
+        );
         res.status(201).json({ mensaje: "Palabra creada con éxito" });
     } catch (error) {
-        console.error("Error en /palabras:", error);
+        console.error("Error en POST /admin/palabras:", error);
         res.status(500).json({ mensaje: "Hubo un error al crear la palabra" });
     }
 });
 
+// Eliminar palabra por ID
 app.delete('/admin/palabras', async function (req, res) {
+    const { id } = req.body;
     try {
-        let respuesta = await realizarQuery(`DELETE FROM Palabras WHERE id = ${req.body.id}`)
-        res.json({ message: "palabra eliminada" })
+        await realizarQuery(`DELETE FROM Palabras WHERE id_palabra = ${id}`);
+        res.status(200).json({ mensaje: "Palabra eliminada con éxito" });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ mensaje: "Hubo un error" });
+        console.error("Error en DELETE /admin/palabras:", error);
+        res.status(500).json({ mensaje: "Hubo un error al eliminar la palabra" });
     }
-})
+});
 
+// Modificar datos de la palabra
 app.put('/admin/palabras', async function (req, res) {
+    const { id, palabra, id_partida } = req.body;
     try {
-        let respuesta = await realizarQuery(`UPDATE Palabras SET ${req.body.modificacion} = '${req.body.valor}' WHERE id = ${req.body.id}`)
-        res.json({ message: "palabra modificada" })
+        await realizarQuery(
+            `UPDATE Palabras 
+             SET palabra = '${palabra}', id_partida = '${id_partida}' 
+             WHERE id_palabra = ${id}`
+        );
+        res.status(200).json({ mensaje: "Palabra modificada con éxito" });
     } catch (error) {
-        return ("Hubo un error")
+        console.error("Error en PUT /admin/palabras:", error);
+        res.status(500).json({ mensaje: "Hubo un error al modificar la palabra" });
     }
-})
+});
 
 
 /// Socket
