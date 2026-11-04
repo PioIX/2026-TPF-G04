@@ -6,12 +6,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Knewave } from 'next/font/google';
 import styles from './page.module.css';
-<<<<<<< Updated upstream
-=======
 import { useRouter } from 'next/navigation';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
->>>>>>> Stashed changes
 
 const knewave = Knewave({
   weight: '400',
@@ -51,8 +48,6 @@ export default function PrincipalPage() {
     cargarRanking();
   }, []);
 
-<<<<<<< Updated upstream
-=======
   const handleJugar = () => {
     router.push('/juego');
   };
@@ -89,7 +84,6 @@ export default function PrincipalPage() {
     // router.push(`/sala/${roomCode}`); // Opcional: Redirigir a la sala
   };
 
->>>>>>> Stashed changes
   return (
     <div className={styles.container}>
       <header className={styles.navbar}>
@@ -98,7 +92,12 @@ export default function PrincipalPage() {
 
       <main className={styles.main}>
         <section className={styles.menu}>
-          <button className={`${styles.btnJugar} ${knewave.className}`}>JUGAR</button>
+          <button
+            className={`${styles.btnJugar} ${knewave.className}`}
+            onClick={handleJugar}
+          >
+            JUGAR
+          </button>
           <Link href="/ingresar-sala" className={styles.menuLink}>INGRESAR A SALA</Link>
           
           {/* Botón que abre el modal en lugar de la redirección */}

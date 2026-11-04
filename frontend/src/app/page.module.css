@@ -17,61 +17,47 @@
   font-family: var(--font-geist-sans);
   background-color: var(--background);
 }
-
-/* El contenedor principal ocupa toda la pantalla */
 .contenedor {
   position: relative;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   overflow: hidden;
+  background: #3e66bd;
 }
 
-/* La imagen de fondo se envía atrás */
 .imagenFondo {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Se estira y adapta sin deformarse */
-  z-index: 1;        /* Capa 1 (atrás) */
+  object-fit: cover;
+  transform: translateX(-3%); 
+  z-index: 0;
 }
 
-/* El contenido se coloca por encima de la imagen */
 .contenido {
-  position: relative;
-  z-index: 2;        /* Capa 2 (adelante) */
+  position: absolute;
+  top: 45%;
+  left: 52%;                 
+  transform: translate(-50%, -50%);
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 25px;
+  gap: 1.5rem;
 }
 
 .contenido h1 {
-  font-size: 8rem; /* 👈 Aumenta o disminuye este valor (ej: 4rem, 6rem) */
+  font-size: 9vw;
   font-weight: bold;
-  letter-spacing: 2px; /* Separa un poco las letras si quieres */
+  letter-spacing: 2px;
   text-align: center;
-  margin-bottom: 2rem;
-  
-  /* Opcional: Agregar sombra para que resalte más sobre el fondo */
+  white-space: nowrap;
+  margin: 0;
   text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.7);
-
-    -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-}
-
-
-.titulo {
-  font-size: 4.5rem;
-  color: #fffde7;
-  font-family: 'Arial Black', sans-serif;
-  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
-  margin: 0;
 }
 
 .contenedorBotones {
@@ -94,4 +80,11 @@
 .boton:hover {
   background-color: #1f3c78;
   transform: translateY(-2px);
+}
+.titulo {
+  font-size: 4.5rem;
+  color: #fffde7;
+  font-family: 'Arial Black', sans-serif;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+  margin: 0;
 }

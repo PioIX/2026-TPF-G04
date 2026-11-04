@@ -11,13 +11,9 @@
   "dependencies": {
     "next": "16.4.0",
     "react": "19.3.0",
-<<<<<<< Updated upstream
-    "react-dom": "19.3.0"
-=======
     "react-dom": "19.3.0",
     "reactjs-popup": "^2.0.6",
     "socket.io-client": "^4.8.4"
->>>>>>> Stashed changes
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",
