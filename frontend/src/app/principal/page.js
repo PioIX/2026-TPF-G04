@@ -93,7 +93,7 @@ export default function PrincipalPage() {
   return (
     <div className={`${styles.container} ${leagueSpartan.className}`}>
       <header className={styles.navbar}>
-        <h1 className={`${styles.logo} ${knewave.className}`}>PINTUPIO</h1>
+        <Link href="/" className={`${styles.logo} ${knewave.className}`}>PINTUPIO</Link>
       </header>
 
       <main className={styles.main}>

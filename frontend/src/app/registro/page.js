@@ -83,9 +83,7 @@ export default function RegistroPage() {
     >
       <header className={styles.header}>
         <div className={styles.logo}>
-          <Link href="/" className={knewave.className}>
-            PINTUPIO
-          </Link>
+          <Link href="/" className={`${styles.logo} ${knewave.className}`}>PINTUPIO</Link>
         </div>
 
         <nav className={styles.navigation}>

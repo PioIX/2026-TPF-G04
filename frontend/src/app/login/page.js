@@ -77,12 +77,12 @@ export default function Login() {
     <div className={`${styles.container} ${knewave.variable} ${hammersmithOne.variable} ${leagueSpartan.variable}`}>
       <header className={styles.header}>
         <div className={styles.logo}>
-          <a href="#" className={knewave.className}>PINTUPIO</a>
+          <Link href="/" className={`${styles.logo} ${knewave.className}`}>PINTUPIO</Link>
         </div>
 
         <nav className={styles.navigation}>
-          <a href="#">Iniciar sesión</a>
-          <a href="#">Registrarse</a>
+          <Link href="/login">Iniciar sesión</Link>
+          <Link href="/registro">Registrarse</Link>
         </nav>
       </header>
 
