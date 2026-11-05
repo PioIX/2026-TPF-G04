@@ -1,12 +1,260 @@
-.lienzoContainer {
-  width: 800px;
-  height: 1000px;
+:global(*) {
+  box-sizing: border-box;
 }
 
-.juegoContainer {
+:global(body) {
+  margin: 0;
+  padding: 0;
+  background-color: #294f9f;
+  color: white;
+  font-family: var(--font-league-spartan), sans-serif;
+  overflow-x: hidden;
+}
+
+/* ESTRUCTURA GENERAL DE LA PÁGINA */
+.gamePage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #3d64b8;
+  padding: 15px 25px;
+  gap: 15px;
+}
+
+/* ENCABEZADO SUPERIOR DE LA SALA */
+.gameHeader {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: #2454bd;
+  padding: 10px 20px;
+  border-radius: 8px;
+}
+
+.headerBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-hammersmith), sans-serif;
+}
+
+.headerLabel {
+  color: #ffad32;
+  font-size: 1.3rem;
+}
+
+.headerValue {
+  color: white;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.timerValue {
+  color: #ff941c;
+  font-family: var(--font-knewave), sans-serif;
+  font-size: 1.8rem;
+}
+
+/* GRID PRINCIPAL (JUGADORES | CANVAS | CHAT) */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 260px 1fr 320px;
+  gap: 20px;
+  flex: 1;
+  align-items: start;
+}
+
+/* --- RECUADROS TIPO TARJETA (TOMA EL ESTILO DE LOGIN) --- */
+.playersCard,
+.chatCard {
+  background-color: #3d64b8;
+  border: 2px solid white;
+  padding: 0 15px 15px;
+  position: relative;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ENCABEZADOS DE SECCIÓN (TIPO FORMULARIO LOGIN) */
+.playersHeader,
+.chatHeader {
+  display: table;
+  margin: -18px auto 15px;
+  padding: 0 12px;
+  background-color: #3d64b8;
+  color: #ff941c;
+  font-family: var(--font-knewave), sans-serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  text-align: center;
+}
+
+/* LISTA DE JUGADORES */
+.playersList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.playerItem {
+  background-color: #2454bd;
+  border-radius: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.activePainter {
+  border: 2px solid #ffad32;
+  background-color: #294f9f;
+}
+
+.playerInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.playerName {
+  font-family: var(--font-hammersmith), sans-serif;
+  font-size: 1.1rem;
+  color: white;
+}
+
+.playerScore {
+  color: #ffad32;
+  font-weight: bold;
+}
+
+/* SECCIÓN CENTRAL: PALABRA Y CANVAS */
+.canvasSection {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.wordBanner {
+  background-color: #2454bd;
+  border: 2px solid white;
+  padding: 8px 30px;
+  border-radius: 20px;
+  font-family: var(--font-hammersmith), sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  color: white;
+  text-align: center;
+}
+
+.wordBanner strong {
+  color: #ffad32;
+}
+
+.canvasWrapper {
+  border: 2px solid white;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  display: flex;
   justify-content: center;
-  min-height: 100px;
+}
+
+/* SECCIÓN DEL CHAT */
+.chatSection {
+  width: 100%;
+}
+
+.chatMessages {
+  flex: 1;
+  height: 380px;
+  overflow-y: auto;
+  background-color: white;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.messageItem {
+  color: #333;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+
+.msgUser {
+  color: #2454bd;
+}
+
+.msgText {
+  color: #222;
+}
+
+.systemMessage {
+  color: #ff941c;
+  font-style: italic;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.chatForm {
+  display: flex;
+  gap: 8px;
+}
+
+.chatForm input {
+  flex: 1;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 25px;
+  outline: none;
+  background-color: white;
+  color: #333;
+  font-family: var(--font-league-spartan), sans-serif;
+  font-size: 0.95rem;
+}
+
+.chatForm input:focus {
+  box-shadow: 0 0 0 2px #ffad32;
+}
+
+.chatForm button {
+  border: none;
+  background: transparent;
+  color: white;
+  font-family: var(--font-league-spartan), sans-serif;
+  font-size: 1.2rem;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.chatForm button:hover:not(:disabled) {
+  color: #ffad32;
+}
+
+.chatForm button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* RESPONSIVE PARA DISPOSITIVOS MÓVILES */
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .playersCard,
+  .chatCard {
+    min-height: auto;
+  }
 }
