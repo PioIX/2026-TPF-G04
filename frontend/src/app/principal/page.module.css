@@ -1,98 +1,392 @@
-.container {
-  min-height: 100vh;
-  background-color: #3b5998;
-  color: white;
-  font-family: sans-serif;
-  display: flex;
-  flex-direction: column;
+:global(*) {
+  box-sizing: border-box;
 }
 
+:global(body) {
+  margin: 0;
+  padding: 0;
+  background-color: #294f9f;
+  color: white;
+  font-family: var(--font-league-spartan), sans-serif;
+}
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #3d64b8;
+}
+
+/* ENCABEZADO */
 .navbar {
-  padding: 20px 40px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 25px;
+  background-color: #2454bd;
 }
 
 .logo {
-  font-size: 2.5rem;
   color: white;
+  font-size: 1.8rem;
   margin: 0;
-  letter-spacing: 2px;
 }
 
+/* CONTENIDO PRINCIPAL (Horizontal: Menú + Tablas al lado) */
 .main {
-  display: flex;
   flex: 1;
-  padding: 20px 40px;
-  gap: 40px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 35px;
+  padding: 40px 20px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
+/* SECCIÓN DEL MENÚ (Más grande y amplio) */
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  width: 220px;
-  flex-shrink: 0;
+  align-items: center;
+  gap: 16px;
+  flex: 0 0 380px; /* <--- Aumenta este valor (ej. 360px, 380px o 400px) */
 }
 
+/* Botón JUGAR */
 .btnJugar {
-  background-color: #d9534f;
-  color: white;
+  width: 100%;
+  padding: 16px 28px;
   border: none;
-  padding: 15px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 1.1rem;
+  border-radius: 30px;
+  background-color: #ff941c;
+  color: white;
+  font-size: 2.2rem;
   cursor: pointer;
-  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  transition: transform 0.1s ease, background-color 0.2s ease;
 }
 
+.btnJugar:hover {
+  background-color: #ffad32;
+  transform: scale(1.03);
+}
+
+/* Botones de "INGRESAR A SALA" y "CREAR SALA" (Morados más grandes) */
 .menuLink {
-  background-color: rgba(255, 255, 255, 0.15);
+  width: 80%;
+  padding: 15px 24px;
+  border: none;
+  border-radius: 30px;
+  background-color: #b374d1;
   color: white;
-  padding: 12px 15px;
-  border-radius: 8px;
+  font-family: var(--font-league-spartan), sans-serif;
+  font-size: 1.5rem;
+  font-weight: bold;
   text-decoration: none;
-  font-weight: 500;
   text-align: center;
-  transition: background 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  transition: transform 0.1s ease, background-color 0.2s ease;
+  display: inline-block;
 }
 
 .menuLink:hover {
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: #c488e0;
+  transform: scale(1.03);
+  color: white;
 }
 
+/* Enlace de Cerrar Sesión */
+.volver {
+  width: auto;
+  background: transparent;
+  box-shadow: none;
+  margin-top: 10px;
+  font-size: 1.2rem;
+  opacity: 0.85;
+}
+
+.volver:hover {
+  background: transparent;
+  color: #ffad32;
+  transform: none;
+  opacity: 1;
+}
+
+/* CONTENEDOR DE TABLAS */
 .tablesContainer {
   display: flex;
-  gap: 30px;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 25px;
   flex: 1;
+  width: 100%;
 }
 
+/* TARJETA INDIVIDUAL DE TABLA */
 .cardTabla {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
-  padding: 20px;
   flex: 1;
+  min-width: 300px;
+  padding: 0 20px 20px;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
 }
 
 .tablaHeader h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: bold;
+  display: table;
+  max-width: 100%;
+  margin: -22px auto 6px;
+  padding: 4px 16px;
+  background-color: #3d64b8;
+  color: #ff941c;
+  font-family: var(--font-knewave), sans-serif;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  font-weight: 400;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .tablaHeader p {
-  margin: 5px 0 15px 0;
-  font-size: 0.9rem;
-  opacity: 0.8;
+  margin: 8px 0 16px;
+  color: #ffad32;
+  font-family: var(--font-hammersmith), sans-serif;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+/* ESTRUCTURA Y FILAS DE LA TABLA */
 .tabla {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  margin-top: -8px;
+}
+
+.tabla tbody tr {
+  background-color: rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.tabla tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
 }
 
 .tabla td {
-  padding: 10px 5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 12px;
+  font-size: 1.05rem;
+  border: none;
+}
+
+.tabla td:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  font-weight: 900;
+  width: 18%;
+  text-align: center;
+  font-size: 1.15rem;
+}
+
+.tabla td:nth-child(2) {
+  text-align: left;
+  width: 52%;
+  font-weight: 600;
+}
+
+.tabla td:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  text-align: right;
+  font-weight: bold;
+  color: #ffad32;
+  width: 30%;
+}
+
+/* MEDALLAS DEL TOP 3 */
+.tabla tbody tr:nth-child(1) td:first-child {
+  color: #ffd700;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+}
+
+.tabla tbody tr:nth-child(2) td:first-child {
+  color: #e0e0e0;
+  text-shadow: 0 0 6px rgba(224, 224, 224, 0.5);
+}
+
+.tabla tbody tr:nth-child(3) td:first-child {
+  color: #cd7f32;
+  text-shadow: 0 0 6px rgba(205, 127, 50, 0.5);
+}
+
+/* OVERLAY Y POPUP */
+:global(.custom-popup-overlay) {
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(4px);
+}
+
+:global(.custom-popup-content) {
+  background: transparent !important;
+  border: none !important;
+  width: 90% !important;
+  max-width: 420px !important;
+  padding: 0 !important;
+}
+
+.modalContent {
+  background-color: #3d64b8;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  color: white;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  color: #ff941c;
+  font-size: 1.8rem;
+}
+
+.modalCloseBtn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modalCloseBtn:hover {
+  color: #ffad32;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.formGroup label {
+  color: #ffad32;
+  font-size: 1.1rem;
+}
+
+.inputGroup {
+  display: flex;
+  gap: 8px;
+}
+
+.formGroup input {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 20px;
+  outline: none;
+  background-color: white;
+  color: #333;
+  font-size: 1rem;
+}
+
+.formGroup input:focus {
+  box-shadow: 0 0 0 2px #ffad32;
+}
+
+.btnRefresh {
+  background-color: #2454bd;
+  border: 1px solid white;
+  border-radius: 12px;
+  padding: 0 12px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: transform 0.1s ease;
+}
+
+.btnRefresh:hover {
+  transform: scale(1.05);
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.btnSubmit {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 20px;
+  background-color: #b374d1;
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btnSubmit:hover {
+  background-color: #c488e0;
+}
+
+.btnCancel {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btnCancel:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* RESPONSIVE PARA PANTALLAS PEQUEÑAS */
+@media (max-width: 992px) {
+  .main {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tablesContainer {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .menu,
+  .cardTabla {
+    width: 100%;
+    max-width: 450px;
+  }
 }
