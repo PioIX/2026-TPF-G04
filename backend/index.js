@@ -340,11 +340,11 @@ app.get('/admin/palabras', async function (req, res) {
 
 // Agregar nueva palabra
 app.post('/admin/palabras', async function (req, res) {
-    const { palabra, id_partida } = req.body;
+    const { palabra} = req.body;
     try {
         await realizarQuery(
-            `INSERT INTO Palabras (palabra, id_partida) 
-             VALUES ('${palabra}', '${id_partida}')`
+            `INSERT INTO Palabras (palabra) 
+            VALUES ('${palabra}')`
         );
         res.status(201).json({ mensaje: "Palabra creada con éxito" });
     } catch (error) {
@@ -367,11 +367,11 @@ app.delete('/admin/palabras', async function (req, res) {
 
 // Modificar datos de la palabra
 app.put('/admin/palabras', async function (req, res) {
-    const { id, palabra, id_partida } = req.body;
+    const { id, palabra} = req.body;
     try {
         await realizarQuery(
             `UPDATE Palabras 
-             SET palabra = '${palabra}', id_partida = '${id_partida}' 
+             SET palabra = '${palabra}' 
              WHERE id_palabra = ${id}`
         );
         res.status(200).json({ mensaje: "Palabra modificada con éxito" });
