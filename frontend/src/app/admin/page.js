@@ -37,6 +37,7 @@ export default function Admin() {
         usuario_ganador: "",
     });
     const [partidaAEliminar, setPartidaAEliminar] = useState("");
+
     //// Puntos
     const [puntos, setPuntos] = useState([]);
     const [puntoElegido, setPuntoElegido] = useState(null);
@@ -51,19 +52,13 @@ export default function Admin() {
         puntos_obtenidos: "",
     });
     const [puntosAEliminar, setPuntosAEliminar] = useState("");
+
     //// Palabras
     const [palabras, setPalabras] = useState([]);
     const [palabraElegida, setPalabraElegida] = useState(null);
-    const [datosPalabras, setDatosPalabras] = useState({
-        palabra: "",
-        id_palabra: "",
-    });
-    const [nuevaPalabra, setNuevaPalabra] = useState({
-        palabra: "",
-        id_palabra: "",
-    });
+    const [datosPalabras, setDatosPalabras] = useState({ palabra: "" });
+    const [nuevaPalabra, setNuevaPalabra] = useState({ palabra: "" });
     const [palabraAEliminar, setPalabraAEliminar] = useState("");
-
 
     //// OBTENER USUARIOS
     async function obtenerUsuarios() {
@@ -75,11 +70,8 @@ export default function Admin() {
             console.error("Error al obtener los usuarios:", error);
         }
     }
-    useEffect(() => {
-        obtenerUsuarios();
-    }, []);
+    useEffect(() => { obtenerUsuarios(); }, []);
 
-    ///// MODIFICAR USUARIO
     function elegirUsuario(u) {
         setUsuarioElegido(u);
         setDatos({
@@ -99,7 +91,10 @@ export default function Admin() {
 
     function guardar(e) {
         e.preventDefault();
-        if (!usuarioElegido) return;
+        if (!usuarioElegido) {
+            alert("Selecciona un usuario de la tabla para modificar.");
+            return;
+        }
         const nombreOriginal = usuarioElegido.usuario;
 
         fetch(`http://localhost:4000/admin/usuarios/${encodeURIComponent(nombreOriginal)}`, {
@@ -110,17 +105,15 @@ export default function Admin() {
         })
             .then(response => {
                 if (response.ok) {
-                    setUsuarios(usuarios.map(u =>
-                        u.usuario === nombreOriginal ? { ...u, ...datos } : u
-                    ));
+                    obtenerUsuarios();
                     setUsuarioElegido(null);
+                    setDatos({ usuario: "", email: "", contraseña: "", puntos_obtenidos: 0, partidas_ganadas: 0, es_admin: false });
                 }
                 return response.json();
             })
             .then(data => alert(data.mensaje))
             .catch(error => console.error("Error al modificar el usuario:", error));
     }
-
 
     function cambiarNuevo(e) {
         const { name, value, type, checked } = e.target;
@@ -130,10 +123,8 @@ export default function Admin() {
         });
     }
 
-    ///// AGREGAR USUARIO
     function crearUsuario(e) {
         e.preventDefault();
-
         fetch('http://localhost:4000/admin/usuarios', {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -141,36 +132,24 @@ export default function Admin() {
             body: JSON.stringify(nuevoUsuario),
         })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error("Error al crear usuario");
-                }
+                if (!response.ok) throw new Error("Error al crear usuario");
                 return response.json();
             })
             .then(data => {
                 alert(data.mensaje || "Usuario creado con éxito");
-                setUsuarios([...usuarios, nuevoUsuario]);
-                setNuevoUsuario({
-                    usuario: "",
-                    email: "",
-                    contraseña: "",
-                    puntos_obtenidos: 0,
-                    partidas_ganadas: 0,
-                    es_admin: false,
-                });
+                obtenerUsuarios();
+                setNuevoUsuario({ usuario: "", email: "", contraseña: "", puntos_obtenidos: 0, partidas_ganadas: 0, es_admin: false });
             })
             .catch(error => console.error("Error al agregar el usuario:", error));
     }
-    ///// ELIMINAR USUARIO
+
     function eliminarUsuario(e) {
         e.preventDefault();
         if (!usuarioAEliminar) {
             alert("Por favor selecciona un usuario para eliminar.");
             return;
         }
-
-        if (!confirm(`¿Estás seguro de que deseas eliminar al usuario "${usuarioAEliminar}"?`)) {
-            return;
-        }
+        if (!confirm(`¿Estás seguro de que deseas eliminar al usuario "${usuarioAEliminar}"?`)) return;
 
         fetch(`http://localhost:4000/admin/usuarios/${encodeURIComponent(usuarioAEliminar)}`, {
             method: "DELETE",
@@ -182,13 +161,13 @@ export default function Admin() {
             })
             .then(data => {
                 alert(data.mensaje);
-                // Actualizamos la lista local filtrando al usuario borrado
-                setUsuarios(usuarios.filter(u => u.usuario !== usuarioAEliminar));
-                setUsuarioAEliminar(""); // Limpiamos la selección
+                obtenerUsuarios();
+                setUsuarioAEliminar("");
             })
             .catch(error => console.error("Error al eliminar el usuario:", error));
     }
-    ///// OBTENER PARTIDAS
+
+    //// PARTIDAS
     async function obtenerPartidas() {
         try {
             const res = await fetch('http://localhost:4000/admin/partidas', { credentials: "include" });
@@ -198,10 +177,8 @@ export default function Admin() {
             console.error("Error al obtener las partidas:", error);
         }
     }
-    useEffect(() => {
-        obtenerPartidas();
-    }, []);
-    ///// MODIFICAR PARTIDA
+    useEffect(() => { obtenerPartidas(); }, []);
+
     function elegirPartida(p) {
         setPartidaElegida(p);
         setDatosPartida({
@@ -217,7 +194,10 @@ export default function Admin() {
 
     function guardarPartida(e) {
         e.preventDefault();
-        if (!partidaElegida) return;
+        if (!partidaElegida) {
+            alert("Selecciona una partida de la tabla para modificar.");
+            return;
+        }
         const idOriginal = partidaElegida.id_partidas;
 
         fetch(`http://localhost:4000/admin/partidas/${idOriginal}`, {
@@ -228,10 +208,9 @@ export default function Admin() {
         })
             .then(response => {
                 if (response.ok) {
-                    setPartidas(partidas.map(p =>
-                        p.id_partidas === idOriginal ? { ...p, ...datosPartida } : p
-                    ));
+                    obtenerPartidas();
                     setPartidaElegida(null);
+                    setDatosPartida({ rondas: "", usuario_ganador: "" });
                 }
                 return response.json();
             })
@@ -243,7 +222,7 @@ export default function Admin() {
         const { name, value } = e.target;
         setNuevaPartida({ ...nuevaPartida, [name]: value });
     }
-    ///// AGREGAR PARTIDA
+
     function crearPartida(e) {
         e.preventDefault();
         fetch('http://localhost:4000/admin/partidas', {
@@ -263,7 +242,7 @@ export default function Admin() {
             })
             .catch(error => console.error("Error al agregar la partida:", error));
     }
-    ///// ELIMINAR PARTIDA
+
     function eliminarPartida(e) {
         e.preventDefault();
         if (!partidaAEliminar) {
@@ -282,13 +261,13 @@ export default function Admin() {
             })
             .then(data => {
                 alert(data.mensaje);
-                setPartidas(partidas.filter(p => String(p.id_partidas) !== String(partidaAEliminar)));
+                obtenerPartidas();
                 setPartidaAEliminar("");
             })
             .catch(error => console.error("Error al eliminar la partida:", error));
     }
 
-    ///// OBTENER PUNTOS
+    //// PUNTOS
     async function obtenerPuntos() {
         try {
             const res = await fetch('http://localhost:4000/admin/puntos', { credentials: "include" });
@@ -298,17 +277,14 @@ export default function Admin() {
             console.error("Error al obtener los puntos:", error);
         }
     }
-    useEffect(() => {
-        obtenerPuntos();
-    }, []);
+    useEffect(() => { obtenerPuntos(); }, []);
 
-    ///// MODIFICAR PUNTOS
     function elegirPuntos(p) {
         setPuntoElegido(p);
         setDatosPuntos({
-            id_usuario: p.id_usuario || "",
-            id_partida: p.id_partida || "",
-            puntos_obtenidos: p.puntos_obtenidos || "",
+            id_usuario: p.id_usuario ?? "",
+            id_partida: p.id_partida ?? "",
+            puntos_obtenidos: p.puntos_obtenidos ?? "",
         });
     }
 
@@ -322,11 +298,13 @@ export default function Admin() {
         setNuevosPuntos({ ...nuevosPuntos, [name]: value });
     }
 
-    // CAMBIAR PUNTOS
     function guardarPuntos(e) {
         e.preventDefault();
-        if (!puntoElegido) return;
-        const idOriginal = puntoElegido.id;
+        if (!puntoElegido) {
+            alert("Selecciona un registro de puntos de la tabla para modificar.");
+            return;
+        }
+        const idOriginal = puntoElegido.id || puntoElegido.id_puntos;
 
         fetch("http://localhost:4000/admin/puntos", {
             method: "PUT",
@@ -337,15 +315,13 @@ export default function Admin() {
             .then(response => response.json())
             .then(data => {
                 alert(data.mensaje);
-                setPuntos(puntos.map(p =>
-                    p.id === idOriginal ? { ...p, ...datosPuntos } : p
-                ));
+                obtenerPuntos();
                 setPuntoElegido(null);
+                setDatosPuntos({ id_usuario: "", id_partida: "", puntos_obtenidos: "" });
             })
             .catch(error => console.error("Error al modificar puntos:", error));
     }
 
-    // CREAR PUNTOS
     function crearPuntos(e) {
         e.preventDefault();
         fetch("http://localhost:4000/admin/puntos", {
@@ -357,27 +333,32 @@ export default function Admin() {
             .then(response => response.json())
             .then(data => {
                 alert(data.mensaje);
+                obtenerPuntos();
                 setNuevosPuntos({ id_usuario: "", id_partida: "", puntos_obtenidos: "" });
             })
             .catch(error => console.error("Error al crear puntos:", error));
     }
 
-    // ELIMINAR PUNTOS
-    function eliminarPuntos(id) {
+    function eliminarPuntos(e) {
+        e.preventDefault();
+        if (!puntosAEliminar) return;
+
         fetch("http://localhost:4000/admin/puntos", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify({ id }),
+            body: JSON.stringify({ id: puntosAEliminar }),
         })
             .then(response => response.json())
             .then(data => {
                 alert(data.mensaje);
-                setPuntos(puntos.filter(p => p.id !== id));
+                obtenerPuntos();
+                setPuntosAEliminar("");
             })
             .catch(error => console.error("Error al eliminar puntos:", error));
     }
-    ///// OBTENER PALABRAS
+
+    //// PALABRAS
     async function obtenerPalabras() {
         try {
             const res = await fetch('http://localhost:4000/admin/palabras', { credentials: "include" });
@@ -387,16 +368,11 @@ export default function Admin() {
             console.error("Error al obtener las palabras:", error);
         }
     }
-    useEffect(() => {
-        obtenerPalabras();
-    }, []);
-    //  MODIFICAR PALABRA
+    useEffect(() => { obtenerPalabras(); }, []);
+
     function elegirPalabra(p) {
         setPalabraElegida(p);
-        setDatosPalabras({
-            palabra: p.palabra || "",
-            id_partida: p.id_partida || "",
-        });
+        setDatosPalabras({ palabra: p.palabra ?? "" });
     }
 
     function cambiarDatosPalabras(e) {
@@ -411,7 +387,10 @@ export default function Admin() {
 
     function guardarPalabra(e) {
         e.preventDefault();
-        if (!palabraElegida) return;
+        if (!palabraElegida) {
+            alert("Selecciona una palabra de la tabla para modificar.");
+            return;
+        }
         const idOriginal = palabraElegida.id_palabra || palabraElegida.id;
 
         fetch("http://localhost:4000/admin/palabras", {
@@ -423,15 +402,13 @@ export default function Admin() {
             .then(response => response.json())
             .then(data => {
                 alert(data.mensaje);
-                setPalabras(palabras.map(p =>
-                    (p.id_palabra === idOriginal || p.id === idOriginal) ? { ...p, ...datosPalabras } : p
-                ));
+                obtenerPalabras();
                 setPalabraElegida(null);
+                setDatosPalabras({ palabra: "" });
             })
             .catch(error => console.error("Error al modificar la palabra:", error));
     }
 
-    // CREAR PALABRA
     function crearPalabra(e) {
         e.preventDefault();
         fetch("http://localhost:4000/admin/palabras", {
@@ -443,12 +420,12 @@ export default function Admin() {
             .then(response => response.json())
             .then(data => {
                 alert(data.mensaje);
-                setNuevaPalabra({ palabra: "", id_partida: "" });
+                obtenerPalabras();
+                setNuevaPalabra({ palabra: "" });
             })
             .catch(error => console.error("Error al crear la palabra:", error));
     }
 
-    // ELIMINAR PALABRA
     function eliminarPalabra(e) {
         e.preventDefault();
         if (!palabraAEliminar) return;
@@ -462,420 +439,331 @@ export default function Admin() {
             .then(response => response.json())
             .then(data => {
                 alert(data.mensaje);
-                setPalabras(palabras.filter(p => (p.id_palabra || p.id) !== Number(palabraAEliminar)));
+                obtenerPalabras();
                 setPalabraAEliminar("");
             })
             .catch(error => console.error("Error al eliminar la palabra:", error));
     }
 
-    return (<>
-        {/* USUARIOS */}
-        <div>
-            <div>
-                <h1>USUARIOS</h1>
-                <h2>Traer usuarios</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>usuario</th>
-                            <th>contraseña</th>
-                            <th>email</th>
-                            <th>puntos_obtenidos</th>
-                            <th>partidas_ganadas</th>
-                            <th>es_admin</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {usuarios.map((u, index) => (
-                            <tr
-                                key={`${u.usuario}-${index}`}
-                                onClick={() => elegirUsuario(u)} // 👈 Haces clic en toda la fila y se carga el form abajo
-                                style={{ cursor: "pointer" }}
-                            >
-                                <td>{u.usuario}</td>
-                                <td>{u.email}</td>
-                                <td>{u.puntos_obtenidos}</td>
-                                <td>{u.partidas_ganadas}</td>
-                                <td>{u.es_admin ? "Sí" : "No"}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+    return (
+        <div className={styles.container}>
+            <header className={styles.header}>
+                <h1 className={styles.title}>Panel de Administración</h1>
+            </header>
 
-            <div>
-                <h2>Modificar usuarios</h2>
-                <form onSubmit={guardar}>
-                    <input name="usuario" value={datos.usuario} onChange={cambiar} placeholder="Usuario" required />
-                    <input name="email" type="email" value={datos.email} onChange={cambiar} placeholder="Email" required />
-                    <input name="contraseña" type="password" value={datos.contraseña} onChange={cambiar} placeholder="Contraseña" required />
-                    <input name="puntos_obtenidos" type="number" value={datos.puntos_obtenidos} onChange={cambiar} />
-                    <input name="partidas_ganadas" type="number" value={datos.partidas_ganadas} onChange={cambiar} />
-                    <label>
-                        <input name="es_admin" type="checkbox" checked={datos.es_admin} onChange={cambiar} /> Es admin
-                    </label>
-                    <button type="submit">Guardar cambios</button>
-                    <button type="button" onClick={() => setUsuarioElegido(null)}>Cancelar</button>
-                </form>
-            </div>
-            <div>
-                <h2>Agregar usuarios</h2>
-                <form onSubmit={crearUsuario}>
-                    <input
-                        name="usuario"
-                        value={nuevoUsuario.usuario}
-                        onChange={cambiarNuevo}
-                        placeholder="Usuario"
-                        required
-                    />
-                    <input
-                        name="email"
-                        type="email"
-                        value={nuevoUsuario.email}
-                        onChange={cambiarNuevo}
-                        placeholder="Email"
-                        required
-                    />
-                    <input
-                        name="contraseña"
-                        type="password"
-                        value={nuevoUsuario.contraseña}
-                        onChange={cambiarNuevo}
-                        placeholder="Contraseña"
-                        required
-                    />
-                    <input
-                        name="puntos_obtenidos"
-                        type="number"
-                        value={nuevoUsuario.puntos_obtenidos}
-                        onChange={cambiarNuevo}
-                        placeholder="Puntos obtenidos"
-                    />
-                    <input
-                        name="partidas_ganadas"
-                        type="number"
-                        value={nuevoUsuario.partidas_ganadas}
-                        onChange={cambiarNuevo}
-                        placeholder="Partidas ganadas"
-                    />
+            <div className={styles.grid}>
+                {/* USUARIOS */}
+                <section className={styles.card}>
+                    <h2 className={styles.sectionTitle}>Usuarios</h2>
 
-                    <label>
-                        <input
-                            name="es_admin"
-                            type="checkbox"
-                            checked={nuevoUsuario.es_admin}
-                            onChange={cambiarNuevo}
-                        />
-                        Es administrador
-                    </label>
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Email</th>
+                                    <th>Puntos</th>
+                                    <th>Ganadas</th>
+                                    <th>Rol</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {usuarios.map((u, index) => (
+                                    <tr
+                                        key={`${u.usuario}-${index}`}
+                                        onClick={() => elegirUsuario(u)}
+                                        className={usuarioElegido?.usuario === u.usuario ? styles.selectedRow : ''}
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        <td>{u.usuario}</td>
+                                        <td>{u.email}</td>
+                                        <td>{u.puntos_obtenidos}</td>
+                                        <td>{u.partidas_ganadas}</td>
+                                        <td>
+                                            <span className={u.es_admin ? styles.badgeAdmin : styles.badgeUser}>
+                                                {u.es_admin ? "Admin" : "User"}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
 
-                    <button type="submit">Crear usuario</button>
-                </form>
-
-            </div>
-            <div>
-                <h2>Eliminar usuarios</h2>
-                <form onSubmit={eliminarUsuario}>
-                    <select
-                        value={usuarioAEliminar}
-                        onChange={(e) => setUsuarioAEliminar(e.target.value)}
-                        required
-                    >
-                        <option value="" disabled>Selecciona un usuario a eliminar</option>
-                        {usuarios.map((u, index) => (
-                            <option key={`del-${u.usuario}-${index}`} value={u.usuario}>
-                                {u.usuario} ({u.email})
-                            </option>
-                        ))}
-                    </select>
-                    <button type="submit">Eliminar usuario</button>
-                </form>
-            </div>
-        </div>
-        {/* PARTIDAS */}
-        <div>
-            <div>
-                <h1>PARTIDAS</h1>
-                <h2>Traer partidas</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>id_partidas</th>
-                            <th>rondas</th>
-                            <th>usuario_ganador</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {partidas.map((p, index) => (
-                            <tr
-                                key={`partida-${p.id_partidas || index}`}
-                                onClick={() => elegirPartida(p)}
-                                style={{ cursor: "pointer" }}
-                            >
-                                <td>{p.id_partidas}</td>
-                                <td>{p.rondas}</td>
-                                <td>{p.usuario_ganador}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-
-                {partidaElegida !== null && (
-                    <div>
-                        <h2>Modificar partida</h2>
-                        <form onSubmit={guardarPartida}>
-                            <input name="rondas" type="number" value={datosPartida.rondas} onChange={cambiarPartida} placeholder="Rondas" required />
-                            <input name="usuario_ganador" value={datosPartida.usuario_ganador} onChange={cambiarPartida} placeholder="Usuario ganador" required />
-                            <button type="submit">Guardar cambios</button>
-                            <button type="button" onClick={() => setPartidaElegida(null)}>Cancelar</button>
+                    {/* MODIFICAR USUARIO (SIEMPRE VISIBLE) */}
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>
+                            {usuarioElegido ? `Modificar Usuario (${usuarioElegido.usuario})` : "Modificar Usuario (Haz clic en una fila)"}
+                        </h3>
+                        <form className={styles.form} onSubmit={guardar}>
+                            <input className={styles.input} name="usuario" value={datos.usuario ?? ''} onChange={cambiar} placeholder="Usuario" required />
+                            <input className={styles.input} name="email" type="email" value={datos.email ?? ''} onChange={cambiar} placeholder="Email" required />
+                            <input className={styles.input} name="contraseña" type="password" value={datos.contraseña ?? ''} onChange={cambiar} placeholder="Contraseña" required />
+                            <input className={styles.input} name="puntos_obtenidos" type="number" value={datos.puntos_obtenidos ?? 0} onChange={cambiar} placeholder="Puntos" />
+                            <input className={styles.input} name="partidas_ganadas" type="number" value={datos.partidas_ganadas ?? 0} onChange={cambiar} placeholder="Ganadas" />
+                            <label className={styles.checkboxLabel}>
+                                <input className={styles.checkbox} name="es_admin" type="checkbox" checked={datos.es_admin ?? false} onChange={cambiar} /> Es admin
+                            </label>
+                            <button className={styles.btnPrimary} type="submit">Guardar cambios</button>
+                            {usuarioElegido && (
+                                <button className={styles.btnSecondary} type="button" onClick={() => {
+                                    setUsuarioElegido(null);
+                                    setDatos({ usuario: "", email: "", contraseña: "", puntos_obtenidos: 0, partidas_ganadas: 0, es_admin: false });
+                                }}>Cancelar</button>
+                            )}
                         </form>
                     </div>
-                )}
 
-                <div>
-                    <h2>Agregar partidas</h2>
-                    <form onSubmit={crearPartida}>
-                        <input name="rondas" type="number" value={nuevaPartida.rondas} onChange={cambiarNuevaPartida} placeholder="Cantidad de rondas" required />
-                        <input name="usuario_ganador" value={nuevaPartida.usuario_ganador} onChange={cambiarNuevaPartida} placeholder="Usuario ganador" required />
-                        <button type="submit">Crear partida</button>
-                    </form>
-                </div>
-
-                <div>
-                    <h2>Eliminar partidas</h2>
-                    <form onSubmit={eliminarPartida}>
-                        <select
-                            value={partidaAEliminar}
-                            onChange={(e) => setPartidaAEliminar(e.target.value)}
-                            required
-                        >
-                            <option value="" disabled>Selecciona una partida a eliminar</option>
-                            {partidas.map((p, index) => (
-                                <option key={`del-partida-${p.id_partidas || index}`} value={p.id_partidas}>
-                                    Partida ID: {p.id_partidas} (Ganador: {p.usuario_ganador})
-                                </option>
-                            ))}
-                        </select>
-                        <button type="submit">Eliminar partida</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        {/* PUNTOS */}
-        <div>
-            <h1>PUNTOS</h1>
-            <h2>Traer puntos</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>id_puntos</th>
-                        <th>id_usuario</th>
-                        <th>id_partida</th>
-                        <th>puntos_obtenidos</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {puntos.map((p, index) => (
-                        <tr
-                            key={`punto-${p.id || p.id_puntos || index}`}
-                            onClick={() => elegirPuntos(p)}
-                            style={{ cursor: "pointer" }}
-                        >
-                            <td>{p.id || p.id_puntos}</td>
-                            <td>{p.id_usuario}</td>
-                            <td>{p.id_partida}</td>
-                            <td>{p.puntos_obtenidos}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-
-            {puntoElegido !== null && (
-                <div>
-                    <h2>Modificar puntos</h2>
-                    <form onSubmit={guardarPuntos}>
-                        <input
-                            name="id_usuario"
-                            type="number"
-                            value={datosPuntos.id_usuario}
-                            onChange={cambiarDatosPuntos}
-                            placeholder="ID Usuario"
-                            required
-                        />
-                        <input
-                            name="id_partida"
-                            type="number"
-                            value={datosPuntos.id_partida}
-                            onChange={cambiarDatosPuntos}
-                            placeholder="ID Partida"
-                            required
-                        />
-                        <input
-                            name="puntos_obtenidos"
-                            type="number"
-                            value={datosPuntos.puntos_obtenidos}
-                            onChange={cambiarDatosPuntos}
-                            placeholder="Puntos obtenidos"
-                            required
-                        />
-                        <button type="submit">Guardar cambios</button>
-                        <button type="button" onClick={() => setPuntoElegido(null)}>Cancelar</button>
-                    </form>
-                </div>
-            )}
-
-            <div>
-                <h2>Agregar puntos</h2>
-                <form onSubmit={crearPuntos}>
-                    <input
-                        name="id_usuario"
-                        type="number"
-                        value={nuevosPuntos.id_usuario}
-                        onChange={cambiarNuevosPuntos}
-                        placeholder="ID Usuario"
-                        required
-                    />
-                    <input
-                        name="id_partida"
-                        type="number"
-                        value={nuevosPuntos.id_partida}
-                        onChange={cambiarNuevosPuntos}
-                        placeholder="ID Partida"
-                        required
-                    />
-                    <input
-                        name="puntos_obtenidos"
-                        type="number"
-                        value={nuevosPuntos.puntos_obtenidos}
-                        onChange={cambiarNuevosPuntos}
-                        placeholder="Puntos obtenidos"
-                        required
-                    />
-                    <button type="submit">Crear puntos</button>
-                </form>
-            </div>
-
-            <div>
-                <h2>Eliminar puntos</h2>
-                <form onSubmit={eliminarPuntos}>
-                    <select
-                        value={puntosAEliminar}
-                        onChange={(e) => setPuntosAEliminar(e.target.value)}
-                        required
-                    >
-                        <option value="" disabled>Selecciona un registro a eliminar</option>
-                        {puntos.map((p, index) => (
-                            <option
-                                key={`del-punto-${p.id || p.id_puntos || index}`}
-                                value={p.id || p.id_puntos}
-                            >
-                                Punto ID: {p.id || p.id_puntos} (Usuario: {p.id_usuario} - Puntos: {p.puntos_obtenidos})
-                            </option>
-                        ))}
-                    </select>
-                    <button type="submit">Eliminar puntos</button>
-                </form>
-            </div>
-        </div>
-
-        {/* PALABRAS */}
-        <div>
-            <div>
-                <h1>PALABRAS</h1>
-                <h2>Traer palabras</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>id_palabra</th>
-                            <th>palabra</th>
-                            <th>id_partida</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {palabras.map((p, index) => (
-                            <tr
-                                key={`palabra-${p.id_palabra || p.id || index}`}
-                                onClick={() => elegirPalabra(p)}
-                                style={{ cursor: "pointer" }}
-                            >
-                                <td>{p.id_palabra || p.id}</td>
-                                <td>{p.palabra}</td>
-                                <td>{p.id_partida}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-
-                {palabraElegida !== null && (
-                    <div>
-                        <h2>Modificar palabra</h2>
-                        <form onSubmit={guardarPalabra}>
-                            <input
-                                name="palabra"
-                                value={datosPalabras.palabra}
-                                onChange={cambiarDatosPalabras}
-                                placeholder="Palabra"
-                                required
-                            />
-                            <input
-                                name="id_partida"
-                                type="number"
-                                value={datosPalabras.id_partida}
-                                onChange={cambiarDatosPalabras}
-                                placeholder="ID Partida"
-                                required
-                            />
-                            <button type="submit">Guardar cambios</button>
-                            <button type="button" onClick={() => setPalabraElegida(null)}>Cancelar</button>
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>Agregar usuario</h3>
+                        <form className={styles.form} onSubmit={crearUsuario}>
+                            <input className={styles.input} name="usuario" value={nuevoUsuario.usuario ?? ''} onChange={cambiarNuevo} placeholder="Usuario" required />
+                            <input className={styles.input} name="email" type="email" value={nuevoUsuario.email ?? ''} onChange={cambiarNuevo} placeholder="Email" required />
+                            <input className={styles.input} name="contraseña" type="password" value={nuevoUsuario.contraseña ?? ''} onChange={cambiarNuevo} placeholder="Contraseña" required />
+                            <input className={styles.input} name="puntos_obtenidos" type="number" value={nuevoUsuario.puntos_obtenidos ?? 0} onChange={cambiarNuevo} placeholder="Puntos obtenidos" />
+                            <input className={styles.input} name="partidas_ganadas" type="number" value={nuevoUsuario.partidas_ganadas ?? 0} onChange={cambiarNuevo} placeholder="Partidas ganadas" />
+                            <label className={styles.checkboxLabel}>
+                                <input className={styles.checkbox} name="es_admin" type="checkbox" checked={nuevoUsuario.es_admin ?? false} onChange={cambiarNuevo} /> Es admin
+                            </label>
+                            <button className={styles.btnPrimary} type="submit">Crear usuario</button>
                         </form>
                     </div>
-                )}
 
-                <div>
-                    <h2>Agregar palabra</h2>
-                    <form onSubmit={crearPalabra}>
-                        <input
-                            name="palabra"
-                            value={nuevaPalabra.palabra}
-                            onChange={cambiarNuevaPalabra}
-                            placeholder="Palabra"
-                            required
-                        />
-                        <input
-                            name="id_partida"
-                            type="number"
-                            value={nuevaPalabra.id_partida}
-                            onChange={cambiarNuevaPalabra}
-                            placeholder="ID Partida"
-                            required
-                        />
-                        <button type="submit">Crear palabra</button>
-                    </form>
-                </div>
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>Eliminar usuario</h3>
+                        <form className={styles.form} onSubmit={eliminarUsuario}>
+                            <select className={styles.select} value={usuarioAEliminar ?? ''} onChange={(e) => setUsuarioAEliminar(e.target.value)} required>
+                                <option value="" disabled>Selecciona un usuario a eliminar</option>
+                                {usuarios.map((u, index) => (
+                                    <option key={`del-${u.usuario}-${index}`} value={u.usuario}>
+                                        {u.usuario} ({u.email})
+                                    </option>
+                                ))}
+                            </select>
+                            <button className={styles.btnDanger} type="submit">Eliminar usuario</button>
+                        </form>
+                    </div>
+                </section>
 
-                <div>
-                    <h2>Eliminar palabra</h2>
-                    <form onSubmit={eliminarPalabra}>
-                        <select
-                            value={palabraAEliminar}
-                            onChange={(e) => setPalabraAEliminar(e.target.value)}
-                            required
-                        >
-                            <option value="" disabled>Selecciona una palabra a eliminar</option>
-                            {palabras.map((p, index) => (
-                                <option
-                                    key={`del-palabra-${p.id_palabra || p.id || index}`}
-                                    value={p.id_palabra || p.id}
-                                >
-                                    Palabra ID: {p.id_palabra || p.id} ("{p.palabra}")
-                                </option>
-                            ))}
-                        </select>
-                        <button type="submit">Eliminar palabra</button>
-                    </form>
-                </div>
+                {/* PARTIDAS */}
+                <section className={styles.card}>
+                    <h2 className={styles.sectionTitle}>Partidas</h2>
+
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Rondas</th>
+                                    <th>Usuario Ganador</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {partidas.map((p, index) => (
+                                    <tr
+                                        key={`partida-${p.id_partidas || index}`}
+                                        onClick={() => elegirPartida(p)}
+                                        className={partidaElegida?.id_partidas === p.id_partidas ? styles.selectedRow : ''}
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        <td>{p.id_partidas}</td>
+                                        <td>{p.rondas}</td>
+                                        <td>{p.usuario_ganador}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* MODIFICAR PARTIDA (SIEMPRE VISIBLE) */}
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>
+                            {partidaElegida ? `Modificar Partida (ID: ${partidaElegida.id_partidas})` : "Modificar Partida (Haz clic en una fila)"}
+                        </h3>
+                        <form className={styles.form} onSubmit={guardarPartida}>
+                            <input className={styles.input} name="rondas" type="number" value={datosPartida.rondas ?? ''} onChange={cambiarPartida} placeholder="Rondas" required />
+                            <input className={styles.input} name="usuario_ganador" value={datosPartida.usuario_ganador ?? ''} onChange={cambiarPartida} placeholder="Usuario ganador" required />
+                            <button className={styles.btnPrimary} type="submit">Guardar cambios</button>
+                            {partidaElegida && (
+                                <button className={styles.btnSecondary} type="button" onClick={() => {
+                                    setPartidaElegida(null);
+                                    setDatosPartida({ rondas: "", usuario_ganador: "" });
+                                }}>Cancelar</button>
+                            )}
+                        </form>
+                    </div>
+
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>Agregar partidas</h3>
+                        <form className={styles.form} onSubmit={crearPartida}>
+                            <input className={styles.input} name="rondas" type="number" value={nuevaPartida.rondas ?? ''} onChange={cambiarNuevaPartida} placeholder="Cantidad de rondas" required />
+                            <input className={styles.input} name="usuario_ganador" value={nuevaPartida.usuario_ganador ?? ''} onChange={cambiarNuevaPartida} placeholder="Usuario ganador" required />
+                            <button className={styles.btnPrimary} type="submit">Crear partida</button>
+                        </form>
+                    </div>
+
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>Eliminar partidas</h3>
+                        <form className={styles.form} onSubmit={eliminarPartida}>
+                            <select className={styles.select} value={partidaAEliminar ?? ''} onChange={(e) => setPartidaAEliminar(e.target.value)} required>
+                                <option value="" disabled>Selecciona una partida a eliminar</option>
+                                {partidas.map((p, index) => (
+                                    <option key={`del-partida-${p.id_partidas || index}`} value={p.id_partidas}>
+                                        Partida ID: {p.id_partidas} (Ganador: {p.usuario_ganador})
+                                    </option>
+                                ))}
+                            </select>
+                            <button className={styles.btnDanger} type="submit">Eliminar partida</button>
+                        </form>
+                    </div>
+                </section>
+
+                {/* PUNTOS */}
+                <section className={styles.card}>
+                    <h2 className={styles.sectionTitle}>Puntos</h2>
+
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>ID Usuario</th>
+                                    <th>ID Partida</th>
+                                    <th>Puntos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {puntos.map((p, index) => (
+                                    <tr
+                                        key={`punto-${p.id || p.id_puntos || index}`}
+                                        onClick={() => elegirPuntos(p)}
+                                        className={(puntoElegido?.id || puntoElegido?.id_puntos) === (p.id || p.id_puntos) ? styles.selectedRow : ''}
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        <td>{p.id || p.id_puntos}</td>
+                                        <td>{p.id_usuario}</td>
+                                        <td>{p.id_partida}</td>
+                                        <td>{p.puntos_obtenidos}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* MODIFICAR PUNTOS (SIEMPRE VISIBLE) */}
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>
+                            {puntoElegido ? `Modificar Puntos (ID: ${puntoElegido.id || puntoElegido.id_puntos})` : "Modificar Puntos (Haz clic en una fila)"}
+                        </h3>
+                        <form className={styles.form} onSubmit={guardarPuntos}>
+                            <input className={styles.input} name="id_usuario" type="number" value={datosPuntos.id_usuario ?? ''} onChange={cambiarDatosPuntos} placeholder="ID Usuario" required />
+                            <input className={styles.input} name="id_partida" type="number" value={datosPuntos.id_partida ?? ''} onChange={cambiarDatosPuntos} placeholder="ID Partida" required />
+                            <input className={styles.input} name="puntos_obtenidos" type="number" value={datosPuntos.puntos_obtenidos ?? ''} onChange={cambiarDatosPuntos} placeholder="Puntos obtenidos" required />
+                            <button className={styles.btnPrimary} type="submit">Guardar cambios</button>
+                            {puntoElegido && (
+                                <button className={styles.btnSecondary} type="button" onClick={() => {
+                                    setPuntoElegido(null);
+                                    setDatosPuntos({ id_usuario: "", id_partida: "", puntos_obtenidos: "" });
+                                }}>Cancelar</button>
+                            )}
+                        </form>
+                    </div>
+
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>Agregar puntos</h3>
+                        <form className={styles.form} onSubmit={crearPuntos}>
+                            <input className={styles.input} name="id_usuario" type="number" value={nuevosPuntos.id_usuario ?? ''} onChange={cambiarNuevosPuntos} placeholder="ID Usuario" required />
+                            <input className={styles.input} name="id_partida" type="number" value={nuevosPuntos.id_partida ?? ''} onChange={cambiarNuevosPuntos} placeholder="ID Partida" required />
+                            <input className={styles.input} name="puntos_obtenidos" type="number" value={nuevosPuntos.puntos_obtenidos ?? ''} onChange={cambiarNuevosPuntos} placeholder="Puntos obtenidos" required />
+                            <button className={styles.btnPrimary} type="submit">Crear puntos</button>
+                        </form>
+                    </div>
+
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>Eliminar puntos</h3>
+                        <form className={styles.form} onSubmit={eliminarPuntos}>
+                            <select className={styles.select} value={puntosAEliminar ?? ''} onChange={(e) => setPuntosAEliminar(e.target.value)} required>
+                                <option value="" disabled>Selecciona un registro a eliminar</option>
+                                {puntos.map((p, index) => (
+                                    <option key={`del-punto-${p.id || p.id_puntos || index}`} value={p.id || p.id_puntos}>
+                                        Punto ID: {p.id || p.id_puntos} (Usuario: {p.id_usuario} - Puntos: {p.puntos_obtenidos})
+                                    </option>
+                                ))}
+                            </select>
+                            <button className={styles.btnDanger} type="submit">Eliminar puntos</button>
+                        </form>
+                    </div>
+                </section>
+
+                {/* PALABRAS */}
+                <section className={styles.card}>
+                    <h2 className={styles.sectionTitle}>Palabras</h2>
+
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Palabra</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {palabras.map((p, index) => (
+                                    <tr
+                                        key={`palabra-${p.id_palabra || p.id || index}`}
+                                        onClick={() => elegirPalabra(p)}
+                                        className={(palabraElegida?.id_palabra || palabraElegida?.id) === (p.id_palabra || p.id) ? styles.selectedRow : ''}
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        <td>{p.id_palabra || p.id}</td>
+                                        <td>{p.palabra}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* MODIFICAR PALABRA (SIEMPRE VISIBLE) */}
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>
+                            {palabraElegida ? `Modificar Palabra (ID: ${palabraElegida.id_palabra || palabraElegida.id})` : "Modificar Palabra (Haz clic en una fila)"}
+                        </h3>
+                        <form className={styles.form} onSubmit={guardarPalabra}>
+                            <input className={styles.input} name="palabra" value={datosPalabras.palabra ?? ''} onChange={cambiarDatosPalabras} placeholder="Palabra" required />
+                            <button className={styles.btnPrimary} type="submit">Guardar cambios</button>
+                            {palabraElegida && (
+                                <button className={styles.btnSecondary} type="button" onClick={() => {
+                                    setPalabraElegida(null);
+                                    setDatosPalabras({ palabra: "" });
+                                }}>Cancelar</button>
+                            )}
+                        </form>
+                    </div>
+
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>Agregar palabra</h3>
+                        <form className={styles.form} onSubmit={crearPalabra}>
+                            <input className={styles.input} name="palabra" value={nuevaPalabra.palabra ?? ''} onChange={cambiarNuevaPalabra} placeholder="Palabra" required />
+                            <button className={styles.btnPrimary} type="submit">Crear palabra</button>
+                        </form>
+                    </div>
+
+                    <div className={styles.formBlock}>
+                        <h3 className={styles.subTitle}>Eliminar palabra</h3>
+                        <form className={styles.form} onSubmit={eliminarPalabra}>
+                            <select className={styles.select} value={palabraAEliminar ?? ''} onChange={(e) => setPalabraAEliminar(e.target.value)} required>
+                                <option value="" disabled>Selecciona una palabra a eliminar</option>
+                                {palabras.map((p, index) => (
+                                    <option key={`del-palabra-${p.id_palabra || p.id || index}`} value={p.id_palabra || p.id}>
+                                        Palabra ID: {p.id_palabra || p.id} ("{p.palabra}")
+                                    </option>
+                                ))}
+                            </select>
+                            <button className={styles.btnDanger} type="submit">Eliminar palabra</button>
+                        </form>
+                    </div>
+                </section>
             </div>
         </div>
-    </>)
+    );
 }
