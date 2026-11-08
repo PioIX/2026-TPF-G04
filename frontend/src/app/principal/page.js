@@ -1,7 +1,5 @@
 'use client';
 
-// npm install reactjs-popup
-
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Knewave, League_Spartan, Hammersmith_One } from 'next/font/google';
@@ -10,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 
-// Configuración de las fuentes de Google Fonts
 const knewave = Knewave({
   weight: '400',
   subsets: ['latin'],
@@ -31,12 +28,32 @@ export default function PrincipalPage() {
   const [masGanadas, setMasGanadas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados para la sala y el popup
-  const [isModalOpen, setIsModalOpenCrear] = useState(false);
+  // Estados para Modal "CREAR SALA"
+  const [isModalOpenCrear, setIsModalOpenCrear] = useState(false);
   const [roomCode, setRoomCode] = useState('');
   const [password, setPassword] = useState('');
 
+  // Estados para Modal "INGRESAR A SALA"
+  const [isModalOpenIngresar, setIsModalOpenIngresar] = useState(false);
+  const [codigoIngreso, setCodigoIngreso] = useState('');
+  const [passIngreso, setPassIngreso] = useState('');
+
   const router = useRouter();
+
+  const obtenerNombre = () => {
+    if (typeof window !== 'undefined') {
+    const usuarioGuardado = localStorage.getItem('usuario');
+    if (usuarioGuardado) {
+      try {
+        const datos = JSON.parse(usuarioGuardado);
+        return datos.usuario || 'Jugador';
+      } catch (e) {
+        return usuarioGuardado; 
+      }
+    }
+  }
+  return 'Jugador';
+  };
 
   useEffect(() => {
     async function cargarRanking() {
@@ -59,8 +76,10 @@ export default function PrincipalPage() {
     cargarRanking();
   }, []);
 
+  // 1. Botón JUGAR (Unirse a sala pública por defecto)
   const handleJugar = () => {
-    router.push('/juego');
+    const usuario = obtenerNombre();
+    router.push(`/juego?sala=PUBLIC_01&usuario=${encodeURIComponent(usuario)}`);
   };
 
   // Generador de código de 5 letras
@@ -73,21 +92,32 @@ export default function PrincipalPage() {
     return result;
   };
 
-  // Abrir modal y generar código automáticamente
   const handleOpenModalCrear = () => {
     setRoomCode(generateRoomCode());
     setPassword('');
     setIsModalOpenCrear(true);
   };
 
-  // Enviar datos de la sala por Socket o API
+  // 2. Confirmar CREAR SALA
   const handleCrearSala = (e) => {
     e.preventDefault();
     if (!password) return alert('Ingresa una contraseña para la sala');
-
-    console.log('Creando sala con:', { roomCode, password });
-
+    
     setIsModalOpenCrear(false);
+    // Redirige al juego pasando el código generado
+    const usuario = obtenerNombre();
+    router.push(`/juego?sala=${roomCode}&usuario=${encodeURIComponent(usuario)}`);
+  };
+
+  // 3. Confirmar INGRESAR A SALA
+  const handleIngresarSala = (e) => {
+    e.preventDefault();
+    if (!codigoIngreso.trim()) return alert('Ingresa un código de sala');
+
+    setIsModalOpenIngresar(false);
+    // Redirige a la sala especificada
+    const usuario = obtenerNombre();
+    router.push(`/juego?sala=${codigoIngreso.toUpperCase()}&usuario=${encodeURIComponent(usuario)}`);
   };
 
   return (
@@ -98,24 +128,29 @@ export default function PrincipalPage() {
 
       <main className={styles.main}>
         <section className={styles.menu}>
-          <button className={`${styles.menuLink} ${leagueSpartan.className}`}>
+          {/* INGRESAR A SALA */}
+          <button 
+            onClick={() => setIsModalOpenIngresar(true)} 
+            className={`${styles.menuLink} ${leagueSpartan.className}`}
+          >
             INGRESAR A SALA
           </button>
           
-          <button onClick={handleOpenModalCrear} className={`${styles.menuLink} ${leagueSpartan.className}`}>
+          {/* CREAR SALA */}
+          <button 
+            onClick={handleOpenModalCrear} 
+            className={`${styles.menuLink} ${leagueSpartan.className}`}
+          >
             CREAR SALA
           </button>
 
+          {/* JUGAR DIRECTO */}
           <button
             className={`${styles.btnJugar} ${knewave.className}`}
             onClick={handleJugar}
           >
             JUGAR
           </button>
-
-          {/* <Link href="/" className={`${styles.menuLink} ${styles.volver} ${leagueSpartan.className}`}>
-            Cerrar Sesión
-          </Link> */}
         </section>
 
         <section className={styles.tablesContainer}>
@@ -127,8 +162,6 @@ export default function PrincipalPage() {
             <table className={styles.tabla}>
               <tbody>
                 {loading ? (
-                  // ¿Qué es "colSpan"?
-                  // Indica cuantas columnas debe ocupar la tabla
                   <tr><td colSpan="3">Cargando...</td></tr>
                 ) : mejorPuntaje.length > 0 ? (
                   mejorPuntaje.map((item, index) => (
@@ -171,8 +204,8 @@ export default function PrincipalPage() {
         </section>
       </main>
 
-      {/* Modal para Crear Sala */}
-      <Popup open={isModalOpen} onClose={() => setIsModalOpenCrear(false)} modal nested>
+      {/* MODAL PARA CREAR SALA */}
+      <Popup open={isModalOpenCrear} onClose={() => setIsModalOpenCrear(false)} modal nested>
         {(close) => (
           <div style={{ padding: '20px', backgroundColor: '#fff', borderRadius: '8px', color: '#333' }}>
             <h2 className={knewave.className} style={{ marginBottom: '15px' }}>Crear Sala</h2>
@@ -214,6 +247,56 @@ export default function PrincipalPage() {
               <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                 <button type="submit" className={leagueSpartan.className} style={{ padding: '8px 16px', cursor: 'pointer', fontWeight: 'bold' }}>
                   Crear e Ingresar
+                </button>
+                <button type="button" onClick={close} className={leagueSpartan.className} style={{ padding: '8px 16px', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+      </Popup>
+
+      {/* MODAL PARA INGRESAR A SALA */}
+      <Popup open={isModalOpenIngresar} onClose={() => setIsModalOpenIngresar(false)} modal nested>
+        {(close) => (
+          <div style={{ padding: '20px', backgroundColor: '#fff', borderRadius: '8px', color: '#333' }}>
+            <h2 className={knewave.className} style={{ marginBottom: '15px' }}>Ingresar a una Sala</h2>
+            
+            <form onSubmit={handleIngresarSala} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label className={hammersmithOne.className} style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
+                  Código de Sala:
+                </label>
+                <input
+                  type="text"
+                  value={codigoIngreso}
+                  onChange={(e) => setCodigoIngreso(e.target.value)}
+                  placeholder="Ej: ABCDE"
+                  maxLength={5}
+                  required
+                  className={leagueSpartan.className}
+                  style={{ padding: '8px', width: '100%', textTransform: 'uppercase' }}
+                />
+              </div>
+
+              <div>
+                <label className={hammersmithOne.className} style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
+                  Contraseña (si requiere):
+                </label>
+                <input
+                  type="password"
+                  value={passIngreso}
+                  onChange={(e) => setPassIngreso(e.target.value)}
+                  placeholder="Contraseña de la sala"
+                  className={leagueSpartan.className}
+                  style={{ padding: '8px', width: '100%' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                <button type="submit" className={leagueSpartan.className} style={{ padding: '8px 16px', cursor: 'pointer', fontWeight: 'bold' }}>
+                  Unirse
                 </button>
                 <button type="button" onClick={close} className={leagueSpartan.className} style={{ padding: '8px 16px', cursor: 'pointer' }}>
                   Cancelar
