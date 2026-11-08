@@ -402,46 +402,90 @@ io.use((socket, next) => {
 
 
 let contador = 0;
-
+const salas = {};
 io.on("connection", (socket) => {
-    const req = socket.request;
+    console.log(`Cliente conectado: ${socket.id}`);
 
-    socket.on("joinRoom", (data) => {
+    // --- UNIRSE A SALA Y GESTIONAR JUGADORES ---
+    socket.on("joinRoom", ({ room, usuario }) => {
+        const nombreFinal = usuario || `Jugador_${socket.id.substring(0, 4)}`;
 
-        if (req.session.room != undefined && req.session.room.length > 0) {
-            socket.leave(req.session.room);
+        // Abandonar la sala anterior si estaba en alguna
+        if (socket.roomActual) {
+            socket.leave(socket.roomActual);
         }
 
-        req.session.room = data.room;
-        req.session.save();
+        socket.join(room);
+        socket.roomActual = room;
+        socket.nombreUsuario = nombreFinal;
 
-        req.session.room = data.room;
-        socket.join(req.session.room);
+        // Crear la sala si no existe
+        if (!salas[room]) {
+            salas[room] = [];
+        }
 
-        io.to(req.session.room).emit("chat-messages", {
-            user: req.session.user,
-            room: req.session.room,
-        });
+        // Verificar si el jugador ya estaba registrado en esta sala
+        const yaExiste = salas[room].find(p => p.socketId === socket.id);
+        if (!yaExiste) {
+            const esElPrimero = salas[room].length === 0;
+
+            salas[room].push({
+                id: socket.id,
+                socketId: socket.id,
+                nombre: nombreFinal,
+                puntos: 0,
+                dibujando: esElPrimero, // El primer jugador (creador) empieza dibujando
+                esCreador: esElPrimero  // Es el #1 / Creador
+            });
+        }
+
+        // Emitir la lista actualizada de jugadores a TODOS en la sala
+        io.to(room).emit("actualizar_jugadores", salas[room]);
     });
 
-    socket.on("pingAll", (data) => {
-        console.log("PING ALL:", data);
-        io.emit("pingAll", { event: "Ping to all", message: data });
+    // --- EVENTOS DEL CHAT ---
+    socket.on('enviar_mensaje', (datosMensaje) => {
+        if (socket.roomActual) {
+            io.to(socket.roomActual).emit('recibir_mensaje', datosMensaje);
+        } else {
+            io.emit('recibir_mensaje', datosMensaje);
+        }
     });
 
-    socket.on("sendMessage", (data) => {
-        io.to(req.session.room).emit("newMessage", {
-            room: req.session.room,
-            message: data.message,
-        });
+    // --- EVENTOS DE DIBUJO ---
+    socket.on('enviar_trazo', (datosTrazo) => {
+        if (socket.roomActual) {
+            socket.to(socket.roomActual).emit('recibir_trazo', datosTrazo);
+        }
     });
 
-    socket.on("eventoPersonalizado", () => {
-        contador++;
-        socket.emit("respuestaPersonalizada", { contador });
+    socket.on('limpiar_canvas', () => {
+        if (socket.roomActual) {
+            socket.to(socket.roomActual).emit('recibir_limpieza');
+        }
     });
 
+    // --- DESCONEXIÓN DE JUGADORES ---
     socket.on("disconnect", () => {
-        console.log("Disconnect");
+        const room = socket.roomActual;
+        if (room && salas[room]) {
+            // Remover jugador de la sala
+            salas[room] = salas[room].filter(p => p.socketId !== socket.id);
+
+            // Si quedan jugadores pero se fue el creador o dibujante, reasignar al primero de la lista
+            if (salas[room].length > 0) {
+                if (!salas[room].some(p => p.esCreador)) {
+                    salas[room][0].esCreador = true;
+                }
+                if (!salas[room].some(p => p.dibujando)) {
+                    salas[room][0].dibujando = true;
+                }
+            } else {
+                delete salas[room]; // Eliminar sala vacía
+            }
+
+            io.to(room).emit("actualizar_jugadores", salas[room]);
+        }
+        console.log(`Cliente desconectado: ${socket.id}`);
     });
 });
