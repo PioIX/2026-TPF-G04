@@ -53,13 +53,15 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
+        // Guardamos el objeto completo del usuario
         localStorage.setItem("usuario", JSON.stringify(data.usuario));
+        // Guardamos el string directo para accederlo rápido en las salas
+        localStorage.setItem("usuarioPintupio", data.usuario.usuario);
 
         if (usuario === "admin" && contraseña === "admin67") {
           router.push("/admin");
         } else {
           router.push("/principal");
-          console.log("Ha ingresado con éxito");
           setUsuario("");
           setContraseña("");
         }

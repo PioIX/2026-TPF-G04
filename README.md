@@ -31,7 +31,7 @@ https://canva.link/isrbpnny3a8bp8q
 
 ## DER
 
-![Diagrama DER](./docs/Diagrama.drawio.png)
+![Diagrama DER](./docs/DERfinal.drawio.png)
 
 ## Tabla de planificación de tareas
 
