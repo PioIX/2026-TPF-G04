@@ -1,5 +1,5 @@
-// require('dotenv').config({ path: __dirname + '/.pio.env' })
-require('dotenv').config({ path: __dirname + '/.home.env' });
+require('dotenv').config({ path: __dirname + '/.pio.env' })
+// require('dotenv').config({ path: __dirname + '/.home.env' });
 
 var express = require('express'); //Tipo de servidor: Express
 var bodyParser = require('body-parser'); //Convierte los JSON
@@ -17,7 +17,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use(cors({
-    origin: ["http://localhost:3000", "http://localhost:3001"],
+    origin: [
+        "http://localhost:3000",
+        "http://10.1.5.107:3001"
+    ],
     credentials: true
 }));
 
@@ -29,9 +32,12 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware);
 
+// const server = app.listen(port, "0.0.0.0", () => {
+//     console.log(`Servidor NodeJS corriendo en puerto ${port}`);
+// });
 const server = app.listen(port, () => {
     console.log(`Servidor NodeJS corriendo en http://localhost:${port}/`);
-});
+})
 
 app.get('/', function (req, res) {
     res.status(200).send({
@@ -175,7 +181,7 @@ app.get('/admin/palabras', async function (req, res) {
 
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:3000", "http://localhost:3001"],
+        origin: ["http://localhost:3000", "http://10.1.5.107:3001"],
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true
     }
