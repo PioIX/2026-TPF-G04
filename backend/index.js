@@ -1,5 +1,5 @@
-require('dotenv').config({ path: __dirname + '/.pio.env' })
-// require('dotenv').config({ path: __dirname + '/.home.env' });
+// require('dotenv').config({ path: __dirname + '/.pio.env' })
+require('dotenv').config({ path: __dirname + '/.home.env' });
 
 var express = require('express'); //Tipo de servidor: Express
 var bodyParser = require('body-parser'); //Convierte los JSON
@@ -17,12 +17,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use(cors({
-    origin: [
-        "http://localhost:3000",
-        "http://10.1.5.107:3001"
-    ],
+    origin: true,
     credentials: true
 }));
+
 
 const sessionMiddleware = session({
     secret: "supersarasa",
@@ -58,11 +56,11 @@ app.get('/usuarios', async function (req, res) {
         });
     }
 });
-
+//// WHERE LOWER (usuario) != 'admin' para que el usuario admin no aparezca en el ranking
 app.get('/ranking/puntaje', async function (req, res) {
     try {
         let respuesta = await realizarQuery(
-            `SELECT usuario, puntos_obtenidos FROM Usuarios ORDER BY puntos_obtenidos DESC LIMIT 5`
+            `SELECT usuario, puntos_obtenidos FROM Usuarios WHERE LOWER(usuario) != 'admin' ORDER BY puntos_obtenidos DESC LIMIT 5`
         );
 
         res.status(200).json(respuesta);
@@ -74,7 +72,7 @@ app.get('/ranking/puntaje', async function (req, res) {
 app.get('/ranking/ganadas', async function (req, res) {
     try {
         let respuesta = await realizarQuery(
-            `SELECT usuario, partidas_ganadas FROM Usuarios ORDER BY partidas_ganadas DESC LIMIT 5`
+            `SELECT usuario, partidas_ganadas FROM Usuarios WHERE LOWER(usuario) != 'admin' ORDER BY partidas_ganadas DESC LIMIT 5`
         );
 
         res.status(200).json(respuesta);
@@ -181,7 +179,7 @@ app.get('/admin/palabras', async function (req, res) {
 
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:3000", "http://10.1.5.107:3001"],
+        origin: true,
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true
     }
@@ -193,6 +191,51 @@ io.use((socket, next) => {
 
 // Lista global de salas.
 const salas = {};
+
+// --- AGREGADO: GUARDAR PUNTOS EN MYSQL AL FINALIZAR ---
+async function guardarPuntosPartida(room) {
+    const sala = salas[room];
+    if (!sala || sala.jugadores.length === 0) return [];
+
+    const ranking = [...sala.jugadores].sort((a, b) => b.puntos - a.puntos);
+    const ganador = ranking[0];
+
+    try {
+        const resPartida = await realizarQuery(
+            `INSERT INTO Partidas (rondas, usuario_ganador) VALUES (${sala.totalRondas}, '${ganador.nombre}')`
+        );
+        const idPartida = resPartida.insertId;
+
+        for (const j of ranking) {
+            const esGanador = j.nombre === ganador.nombre ? 1 : 0;
+
+            await realizarQuery(
+                `UPDATE Usuarios 
+                SET puntos_obtenidos = COALESCE(puntos_obtenidos, 0) + ${j.puntos},
+                    partidas_ganadas = COALESCE(partidas_ganadas, 0) + ${esGanador}
+                WHERE LOWER(usuario) = LOWER('${j.nombre}')`
+            );
+
+            const userDB = await realizarQuery(
+                `SELECT * FROM Usuarios WHERE LOWER(usuario) = LOWER('${j.nombre}')`
+            );
+
+            if (userDB.length > 0 && idPartida) {
+                const idUsuario = userDB[0].id_usuario || userDB[0].id;
+                if (idUsuario) {
+                    await realizarQuery(
+                        `INSERT INTO Puntos (id_usuario, id_partida, puntos_obtenidos)
+                        VALUES (${idUsuario}, ${idPartida}, ${j.puntos})`
+                    );
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error al guardar puntos en MySQL:", error);
+    }
+
+    return ranking;
+}
 
 // --- ELEGIR PALABRA Y ASIGNAR TURNO ---
 
@@ -209,8 +252,12 @@ async function siguienteTurno(room) {
     if (sala.rondaActual > sala.totalRondas) {
         sala.estado = "FINALIZADO";
 
+        // AGREGADO: Guardar resultados en la base de datos y obtener ranking
+        const ranking = await guardarPuntosPartida(room);
+
         io.to(room).emit('fin_partida', {
-            mensaje: '¡La partida ha finalizado!'
+            mensaje: '¡La partida ha finalizado!',
+            top3: ranking.slice(0, 3)
         });
 
         io.to(room).emit('actualizar_jugadores', sala.jugadores);
@@ -247,6 +294,7 @@ async function siguienteTurno(room) {
     }
 
     sala.palabraSecreta = palabraElegida;
+    sala.adivinadores = []; // AGREGADO: Reinicia el orden de adivinadores en cada turno
 
     console.log(
         `[SALA #${room}] Palabra asignada: "${sala.palabraSecreta}"`
@@ -303,7 +351,8 @@ io.on("connection", (socket) => {
                 rondaActual: 1,
                 totalRondas: 3,
                 indiceTurno: 0,
-                palabraSecreta: ""
+                palabraSecreta: "",
+                adivinadores: [] // AGREGADO
             };
         }
 
@@ -388,40 +437,73 @@ io.on("connection", (socket) => {
 
         if (!jugador || !datosMensaje?.texto) return;
 
-        // Mostrar mensaje en el chat.
-        io.to(room).emit(
-            'recibir_mensaje',
-            datosMensaje
-        );
+        if (!sala.adivinadores) sala.adivinadores = [];
 
         if (sala.estado === "JUGANDO" && !jugador.dibujando) {
 
             const textoLimpio = datosMensaje.texto
                 .trim()
-                .toLowerCase();
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "");
 
             const palabraLimpia = (sala.palabraSecreta || "")
                 .trim()
-                .toLowerCase();
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "");
+            // Si ya adivinó y vuelve a escribir la palabra, no se muestra en el chat
+            if (sala.adivinadores.includes(jugador.nombre) && textoLimpio === palabraLimpia) {
+                return;
+            }
 
             if (
                 textoLimpio === palabraLimpia &&
-                palabraLimpia !== ""
+                palabraLimpia !== "" &&
+                !sala.adivinadores.includes(jugador.nombre)
             ) {
+                sala.adivinadores.push(jugador.nombre);
+                const posicion = sala.adivinadores.length; // 1ro, 2do, 3ro, 4to...
 
-                jugador.puntos += 100;
+                // 1ro -> +3 pts | 2do -> +2 pts | 3ro -> +1 pt | 4to+ -> 0 pts
+                const puntosAdivinador = Math.max(0, 4 - posicion);
+                jugador.puntos += puntosAdivinador;
+
+                // El dibujante gana +5 puntos con el primer acierto
+                if (posicion === 1) {
+                    const dibujante = sala.jugadores.find(j => j.dibujando);
+                    if (dibujante) {
+                        dibujante.puntos += 5;
+                    }
+                }
 
                 io.to(room).emit('recibir_mensaje', {
                     usuario: 'Sistema',
-                    texto: `¡${jugador.nombre} adivinó la palabra! (+100 pts)`,
+                    texto: `¡${jugador.nombre} adivinó en ${posicion}.º lugar! (+${puntosAdivinador} pts)${posicion === 1 ? ' | Dibujante +5 pts' : ''}`,
                     isSystem: true
                 });
 
-                sala.indiceTurno += 1;
+                io.to(room).emit(
+                    'actualizar_jugadores',
+                    sala.jugadores
+                );
 
-                siguienteTurno(room);
+                // Si ya adivinaron todos los que no dibujan, pasamos al siguiente turno
+                const totalAdivinadores = sala.jugadores.filter(j => !j.dibujando).length;
+                if (sala.adivinadores.length >= totalAdivinadores) {
+                    sala.indiceTurno += 1;
+                    siguienteTurno(room);
+                }
+
+                return; // Evita que la palabra correcta aparezca escrita en el chat
             }
         }
+
+        // Mostrar mensaje normal en el chat.
+        io.to(room).emit(
+            'recibir_mensaje',
+            datosMensaje
+        );
 
         io.to(room).emit(
             'actualizar_jugadores',
@@ -447,6 +529,12 @@ io.on("connection", (socket) => {
             socket.to(socket.roomActual).emit(
                 'recibir_limpieza'
             );
+        }
+    });
+    // VOLVER HACIA ATRÁS EN EL TRAZO
+    socket.on('deshacer_trazo', () => {
+        if (socket.roomActual) {
+            socket.to(socket.roomActual).emit('recibir_deshacer');
         }
     });
 
