@@ -153,7 +153,7 @@
   font-family: var(--font-knewave), sans-serif;
   font-size: 1.4rem;
   line-height: 1.2;
-  font-weight: 400;
+  font-weight: 900;
   border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -162,7 +162,8 @@
   margin: 8px 0 16px;
   color: #ffad32;
   font-family: var(--font-hammersmith), sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -176,22 +177,28 @@
 }
 
 .tabla tbody tr {
-  background-color: rgba(0, 0, 0, 0.2);
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
 .tabla tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }
 
 .tabla td {
-  padding: 10px 12px;
+  padding: 11px 12px;
   font-size: 1.05rem;
-  border: none;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+  transition: background-color 0.15s ease;
+}
+
+.tabla tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 .tabla td:first-child {
+  border-left: 1px solid rgba(255, 255, 255, 0.28);
   border-top-left-radius: 12px;
   border-bottom-left-radius: 12px;
   font-weight: 900;
@@ -204,45 +211,198 @@
   text-align: left;
   width: 52%;
   font-weight: 600;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tabla td:last-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.28);
   border-top-right-radius: 12px;
   border-bottom-right-radius: 12px;
   text-align: right;
   font-weight: bold;
   color: #ffad32;
   width: 30%;
+  white-space: nowrap;
 }
 
-/* MEDALLAS DEL TOP 3 */
-.tabla tbody tr:nth-child(1) td:first-child {
+/* TOP 3: número con color de medalla y borde de la fila a juego */
+.tabla tbody tr:nth-child(1) td {
+  border-color: rgba(255, 215, 0, 0.6);
+}
+
+.tabla tbody tr:nth-child(2) td {
+  border-color: rgba(224, 224, 224, 0.55);
+}
+
+.tabla tbody tr:nth-child(3) td {
+  border-color: rgba(205, 127, 50, 0.6);
+}
+
+.tabla tbody tr:nth-child(1) td:first-child:not([colspan]) {
   color: #ffd700;
   text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
 }
 
-.tabla tbody tr:nth-child(2) td:first-child {
+.tabla tbody tr:nth-child(2) td:first-child:not([colspan]) {
   color: #e0e0e0;
   text-shadow: 0 0 6px rgba(224, 224, 224, 0.5);
 }
 
-.tabla tbody tr:nth-child(3) td:first-child {
+.tabla tbody tr:nth-child(3) td:first-child:not([colspan]) {
   color: #cd7f32;
   text-shadow: 0 0 6px rgba(205, 127, 50, 0.5);
 }
 
-/* OVERLAY Y POPUP */
-:global(.custom-popup-overlay) {
-  background: rgba(0, 0, 0, 0.6) !important;
+/* Filas de "Cargando..." y "Sin registros" */
+.tabla tbody tr td[colspan] {
+  width: 100%;
+  padding: 14px 12px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+}
+
+/* OVERLAY Y POPUP
+   reactjs-popup usa las clases .popup-overlay y .popup-content.
+   Los !important sirven para pisar los estilos en línea que tiene el JSX. */
+:global(.popup-overlay) {
+  background: rgba(10, 25, 60, 0.65) !important;
   backdrop-filter: blur(4px);
 }
 
-:global(.custom-popup-content) {
-  background: transparent !important;
-  border: none !important;
+:global(.popup-content) {
+  margin: auto !important;
   width: 90% !important;
   max-width: 420px !important;
   padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Tarjeta del popup */
+:global(.popup-content > div) {
+  padding: 24px !important;
+  background-color: #3d64b8 !important;
+  color: white !important;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Título */
+:global(.popup-content h2) {
+  margin: 0 0 20px !important;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ff941c;
+  font-size: 1.8rem;
+  font-weight: 400;
+}
+
+:global(.popup-content form) {
+  gap: 18px !important;
+}
+
+/* Etiquetas */
+:global(.popup-content label) {
+  margin-bottom: 6px !important;
+  color: #ffad32;
+  font-size: 0.95rem;
+  font-weight: normal !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Campos de texto */
+:global(.popup-content input) {
+  min-height: 44px;
+  padding: 8px 16px !important;
+  border: 2px solid transparent;
+  border-radius: 22px;
+  outline: none;
+  background-color: white;
+  color: #333;
+  font-size: 1rem;
+}
+
+:global(.popup-content input::placeholder) {
+  color: #8a93a8;
+}
+
+:global(.popup-content input:focus) {
+  border-color: #ffad32;
+  box-shadow: 0 0 0 3px rgba(255, 173, 50, 0.3);
+}
+
+/* Campos del código de sala: grandes, centrados y con letras separadas */
+:global(.popup-content input[readonly]),
+:global(.popup-content input[maxlength]) {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 900 !important;
+  letter-spacing: 6px;
+  color: #2454bd;
+}
+
+:global(.popup-content input[readonly]) {
+  cursor: default;
+}
+
+/* Botones */
+:global(.popup-content button) {
+  padding: 11px 20px !important;
+  border: 2px solid transparent;
+  border-radius: 24px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+/* Botón principal (Crear e Ingresar / Unirse) */
+:global(.popup-content button[type="submit"]) {
+  flex: 1;
+  background-color: #b374d1;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+:global(.popup-content button[type="submit"]:hover) {
+  background-color: #c488e0;
+  transform: translateY(-1px);
+}
+
+/* Botón Cancelar */
+:global(.popup-content button[type="button"]) {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.6);
+  color: white;
+}
+
+:global(.popup-content button[type="button"]:hover) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Botón 🔄 al lado del código */
+:global(.popup-content input[readonly] + button) {
+  flex: 0 0 44px;
+  height: 44px;
+  padding: 0 !important;
+  background-color: #2454bd;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  font-size: 1.1rem;
+}
+
+:global(.popup-content input[readonly] + button:hover) {
+  background-color: #2f64d6;
+  transform: scale(1.08);
 }
 
 .modalContent {
