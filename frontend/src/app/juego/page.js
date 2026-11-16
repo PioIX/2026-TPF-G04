@@ -66,6 +66,7 @@ function Lienzo({ esMiTurno }) {
         const recibirLimpiezaHandler = () => {
             trazos.current = [];
             trazoActual.current = [];
+            dibujando.current = false;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         };
 
@@ -412,8 +413,9 @@ export default function Page() {
     const [jugadores, setJugadores] = useState([]);
     const [rondaActual, setRondaActual] = useState(1);
     const [totalRondas, setTotalRondas] = useState(3);
-    const [tiempo] = useState(60);
+    const [tiempo, setTiempo] = useState(60);
     const [palabraSecreta, setPalabraSecreta] = useState("");
+    const [longitudPalabra, setLongitudPalabra] = useState(0);
     const [dibujanteId, setDibujanteId] = useState("");
     const [podioFinal, setPodioFinal] = useState(null);
 
@@ -443,14 +445,35 @@ export default function Page() {
             setTotalRondas(datos.totalRondas ?? 3);
             setDibujanteId(datos.dibujanteId || "");
 
+            if (typeof datos.longitudPalabra === 'number') {
+                setLongitudPalabra(datos.longitudPalabra);
+            } else if (datos.palabraSecreta) {
+                setLongitudPalabra(datos.palabraSecreta.length);
+            } else {
+                setLongitudPalabra(0);
+            }
+
             if (datos.palabraSecreta) {
                 setPalabraSecreta(datos.palabraSecreta);
+            } else {
+                setPalabraSecreta("");
+            }
+
+            if (typeof datos.tiempo === 'number') {
+                setTiempo(datos.tiempo);
             }
         };
 
         const manejarTuPalabra = (palabra) => {
             if (palabra) {
                 setPalabraSecreta(palabra);
+                setLongitudPalabra(palabra.length);
+            }
+        };
+
+        const manejarTiempo = (segundos) => {
+            if (typeof segundos === 'number') {
+                setTiempo(segundos);
             }
         };
 
@@ -473,6 +496,7 @@ export default function Page() {
         socket.on('actualizar_jugadores', manejarActualizacion);
         socket.on('actualizar_estado_juego', manejarEstadoJuego);
         socket.on('tu_palabra', manejarTuPalabra);
+        socket.on('actualizar_tiempo', manejarTiempo);
         socket.on('fin_partida', manejarFinPartida);
         socket.on('connect', unirseSala);
 
@@ -484,6 +508,7 @@ export default function Page() {
             socket.off('actualizar_jugadores', manejarActualizacion);
             socket.off('actualizar_estado_juego', manejarEstadoJuego);
             socket.off('tu_palabra', manejarTuPalabra);
+            socket.off('actualizar_tiempo', manejarTiempo);
             socket.off('fin_partida', manejarFinPartida);
             socket.off('connect', unirseSala);
         };
@@ -492,6 +517,11 @@ export default function Page() {
     const iniciarPartida = () => {
         socket.emit('iniciar_partida', { room: salaId });
     };
+
+    const cantidadGuiones = longitudPalabra || palabraSecreta.length;
+
+    // Si alguien está dibujando, la partida ya empezó
+    const partidaEnCurso = jugadores.some(j => j.dibujando);
 
     return (
         <div className={`${styles.gamePage} ${knewave.variable} ${hammersmithOne.variable} ${leagueSpartan.variable}`}>
@@ -553,7 +583,7 @@ export default function Page() {
                         )}
                     </ul>
 
-                    {miJugador?.esAnfitrion === true && (
+                    {miJugador?.esAnfitrion === true && !partidaEnCurso && (
                         <div style={{ marginTop: '20px' }}>
                             <button
                                 onClick={iniciarPartida}
@@ -587,7 +617,7 @@ export default function Page() {
                             <p>
                                 PALABRA:{' '}
                                 <strong>
-                                    {'_ '.repeat(palabraSecreta.length)}
+                                    {'_ '.repeat(cantidadGuiones)}
                                 </strong>
                             </p>
                         )}
