@@ -1,5 +1,5 @@
-require('dotenv').config({ path: __dirname + '/.pio.env' })
-// require('dotenv').config({ path: __dirname + '/.home.env' });
+// require('dotenv').config({ path: __dirname + '/.pio.env' })
+require('dotenv').config({ path: __dirname + '/.home.env' });
 
 var express = require('express'); //Tipo de servidor: Express
 var bodyParser = require('body-parser'); //Convierte los JSON
@@ -167,7 +167,7 @@ app.get('/admin/palabras', async function (req, res) {
 
 const io = new Server(server, {
     cors: {
-        origin: true,
+        origin: ["http://localhost:3000", "http://localhost:3001"],
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true
     }
@@ -269,7 +269,7 @@ async function siguienteTurno(room) {
     }
 
     // 4. Elige una palabra aleatoria de MySQL
-    let palabraElegida = "PELOTA";
+    let palabraElegida
 
     try {
         const resultado = await realizarQuery(
