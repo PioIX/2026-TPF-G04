@@ -42,17 +42,17 @@ export default function PrincipalPage() {
 
   const obtenerNombre = () => {
     if (typeof window !== 'undefined') {
-    const usuarioGuardado = localStorage.getItem('usuario');
-    if (usuarioGuardado) {
-      try {
-        const datos = JSON.parse(usuarioGuardado);
-        return datos.usuario || 'Jugador';
-      } catch (e) {
-        return usuarioGuardado; 
+      const usuarioGuardado = localStorage.getItem('usuario');
+      if (usuarioGuardado) {
+        try {
+          const datos = JSON.parse(usuarioGuardado);
+          return datos.usuario || 'Jugador';
+        } catch (e) {
+          return usuarioGuardado;
+        }
       }
     }
-  }
-  return 'Jugador';
+    return 'Jugador';
   };
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function PrincipalPage() {
   const handleCrearSala = (e) => {
     e.preventDefault();
     if (!password) return alert('Ingresa una contraseña para la sala');
-    
+
     setIsModalOpenCrear(false);
     // Redirige al juego pasando el código generado
     const usuario = obtenerNombre();
@@ -120,25 +120,35 @@ export default function PrincipalPage() {
     router.push(`/juego?sala=${codigoIngreso.toUpperCase()}&usuario=${encodeURIComponent(usuario)}`);
   };
 
+  const handleCerrarSesion = () => {
+    localStorage.removeItem('usuario');
+    router.push('/');
+  };
+
+  
   return (
     <div className={`${styles.container} ${leagueSpartan.className}`}>
       <header className={styles.navbar}>
         <Link href="/" className={`${styles.logo} ${knewave.className}`}>PINTUPIO</Link>
+        <button
+          onClick={handleCerrarSesion}
+          className={`${styles.btnCerrarSesion} ${leagueSpartan.className}`}
+        >Cerrar sesión</button>
       </header>
 
       <main className={styles.main}>
         <section className={styles.menu}>
           {/* INGRESAR A SALA */}
-          <button 
-            onClick={() => setIsModalOpenIngresar(true)} 
+          <button
+            onClick={() => setIsModalOpenIngresar(true)}
             className={`${styles.menuLink} ${leagueSpartan.className}`}
           >
             INGRESAR A SALA
           </button>
-          
+
           {/* CREAR SALA */}
-          <button 
-            onClick={handleOpenModalCrear} 
+          <button
+            onClick={handleOpenModalCrear}
             className={`${styles.menuLink} ${leagueSpartan.className}`}
           >
             CREAR SALA
@@ -209,7 +219,7 @@ export default function PrincipalPage() {
         {(close) => (
           <div style={{ padding: '20px', backgroundColor: '#fff', borderRadius: '8px', color: '#333' }}>
             <h2 className={knewave.className} style={{ marginBottom: '15px' }}>Crear Sala</h2>
-            
+
             <form onSubmit={handleCrearSala} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
                 <label className={hammersmithOne.className} style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
@@ -253,6 +263,7 @@ export default function PrincipalPage() {
                 </button>
               </div>
             </form>
+
           </div>
         )}
       </Popup>
@@ -262,7 +273,7 @@ export default function PrincipalPage() {
         {(close) => (
           <div style={{ padding: '20px', backgroundColor: '#fff', borderRadius: '8px', color: '#333' }}>
             <h2 className={knewave.className} style={{ marginBottom: '15px' }}>Ingresar a una Sala</h2>
-            
+
             <form onSubmit={handleIngresarSala} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
                 <label className={hammersmithOne.className} style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>

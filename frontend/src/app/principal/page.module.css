@@ -550,3 +550,26 @@
     max-width: 450px;
   }
 }
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 0 20px; /* Ajusta según tu diseño */
+}
+
+.btnCerrarSesion {
+  padding: 8px 16px;
+  background-color: #e63946;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btnCerrarSesion:hover {
+  background-color: #c1121f;
+}
