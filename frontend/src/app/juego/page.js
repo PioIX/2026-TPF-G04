@@ -13,6 +13,87 @@ const hammersmithOne = Hammersmith_One({ subsets: ["latin"], weight: "400", vari
 const leagueSpartan = League_Spartan({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800", "900"], variable: "--font-league-spartan" });
 
 const socket = io('http://localhost:4000', { autoConnect: true });
+const COLORES_PODIO = ['#f7941d', '#bdbdbd', '#a45a19'];
+
+// --- UTILIDADES ---
+function obtenerNombreUsuario(raw) {
+    if (!raw) return 'Jugador';
+    try {
+        const parsed = JSON.parse(raw);
+        return (parsed.usuario || parsed).toString().trim() || 'Jugador';
+    } catch {
+        return raw.replace(/['"]+/g, '').trim() || 'Jugador';
+    }
+}
+
+function dibujarSegmento(ctx, { desde, hasta, color, grosor }) {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = grosor;
+    ctx.lineCap = "round";
+    ctx.moveTo(desde.x, desde.y);
+    ctx.lineTo(hasta.x, hasta.y);
+    ctx.stroke();
+}
+
+function rellenarZona(ctx, canvas, xInicio, yInicio, colorHex, tolerancia = 50) {
+    const { width: ancho, height: alto } = canvas;
+    const x0 = Math.floor(xInicio);
+    const y0 = Math.floor(yInicio);
+    if (x0 < 0 || y0 < 0 || x0 >= ancho || y0 >= alto) return;
+
+    const imagen = ctx.getImageData(0, 0, ancho, alto);
+    const datos = imagen.data;
+    const n = parseInt(colorHex.slice(1), 16);
+    const [rNuevo, gNuevo, bNuevo] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+
+    // Se compone sobre blanco porque el canvas es transparente y la goma pinta en blanco
+    const colorSobreBlanco = (idx) => {
+        const p = idx * 4;
+        const a = datos[p + 3] / 255;
+        return [
+            datos[p] * a + 255 * (1 - a),
+            datos[p + 1] * a + 255 * (1 - a),
+            datos[p + 2] * a + 255 * (1 - a)
+        ];
+    };
+
+    const [rObj, gObj, bObj] = colorSobreBlanco(y0 * ancho + x0);
+    if (
+        Math.abs(rObj - rNuevo) < 5 &&
+        Math.abs(gObj - gNuevo) < 5 &&
+        Math.abs(bObj - bNuevo) < 5
+    ) return;
+
+    const visitado = new Uint8Array(ancho * alto);
+    const pila = [[x0, y0]];
+
+    while (pila.length > 0) {
+        const [x, y] = pila.pop();
+        if (x < 0 || y < 0 || x >= ancho || y >= alto) continue;
+
+        const idx = y * ancho + x;
+        if (visitado[idx]) continue;
+
+        const [r, g, b] = colorSobreBlanco(idx);
+        if (
+            Math.abs(r - rObj) > tolerancia ||
+            Math.abs(g - gObj) > tolerancia ||
+            Math.abs(b - bObj) > tolerancia
+        ) continue;
+
+        visitado[idx] = 1;
+        const p = idx * 4;
+        datos[p] = rNuevo;
+        datos[p + 1] = gNuevo;
+        datos[p + 2] = bNuevo;
+        datos[p + 3] = 255;
+
+        pila.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    }
+
+    ctx.putImageData(imagen, 0, 0);
+}
 
 // --- COMPONENTE LIENZO ---
 function Lienzo({ esMiTurno }) {
@@ -20,71 +101,68 @@ function Lienzo({ esMiTurno }) {
     const dibujando = useRef(false);
     const ultimo = useRef({ x: 0, y: 0 });
     const trazos = useRef([]);
-    const trazoActual = useRef([]);
 
     const [color, setColor] = useState("#000000");
     const [grosor, setGrosor] = useState(5);
-    const [herramienta, setHerramienta] = useState("lapiz"); // "lapiz" | "goma"
+    const [herramienta, setHerramienta] = useState("lapiz"); // "lapiz" | "goma" | "balde"
 
-    function redibujarTodo(ctx, canvas, listaTrazos) {
+    function guardarTrazo(segmento, esNuevo) {
+        if (esNuevo || trazos.current.length === 0) {
+            trazos.current.push([segmento]);
+        } else {
+            trazos.current[trazos.current.length - 1].push(segmento);
+        }
+    }
+
+    function redibujarTodo(ctx, canvas) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        listaTrazos.forEach((trazo) => {
-            trazo.forEach((seg) => {
-                ctx.beginPath();
-                ctx.strokeStyle = seg.color;
-                ctx.lineWidth = seg.grosor;
-                ctx.lineCap = "round";
-                ctx.moveTo(seg.desde.x, seg.desde.y);
-                ctx.lineTo(seg.hasta.x, seg.hasta.y);
-                ctx.stroke();
-            });
+        trazos.current.forEach((trazo) => {
+            if (trazo[0]?.tipo === 'relleno') {
+                rellenarZona(ctx, canvas, trazo[0].x, trazo[0].y, trazo[0].color);
+            } else {
+                trazo.forEach((seg) => dibujarSegmento(ctx, seg));
+            }
         });
     }
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-
         const ctx = canvas.getContext("2d");
 
-        const recibirTrazoHandler = (data) => {
-            ctx.beginPath();
-            ctx.strokeStyle = data.color;
-            ctx.lineWidth = data.grosor;
-            ctx.lineCap = "round";
-            ctx.moveTo(data.desde.x, data.desde.y);
-            ctx.lineTo(data.hasta.x, data.hasta.y);
-            ctx.stroke();
-
-            if (data.nuevoTrazo || trazos.current.length === 0) {
-                trazos.current.push([data]);
-            } else {
-                trazos.current[trazos.current.length - 1].push(data);
-            }
+        const onTrazo = (data) => {
+            dibujarSegmento(ctx, data);
+            guardarTrazo(data, data.nuevoTrazo);
         };
 
-        const recibirLimpiezaHandler = () => {
+        const onLimpieza = () => {
             trazos.current = [];
-            trazoActual.current = [];
             dibujando.current = false;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         };
 
-        const recibirDeshacerHandler = () => {
+        const onDeshacer = () => {
             if (trazos.current.length > 0) {
                 trazos.current.pop();
-                redibujarTodo(ctx, canvas, trazos.current);
+                redibujarTodo(ctx, canvas);
             }
         };
 
-        socket.on('recibir_trazo', recibirTrazoHandler);
-        socket.on('recibir_limpieza', recibirLimpiezaHandler);
-        socket.on('recibir_deshacer', recibirDeshacerHandler);
+        const onRelleno = (data) => {
+            rellenarZona(ctx, canvas, data.x, data.y, data.color);
+            trazos.current.push([{ tipo: 'relleno', ...data }]);
+        };
+
+        socket.on('recibir_trazo', onTrazo);
+        socket.on('recibir_limpieza', onLimpieza);
+        socket.on('recibir_deshacer', onDeshacer);
+        socket.on('recibir_relleno', onRelleno);
 
         return () => {
-            socket.off('recibir_trazo', recibirTrazoHandler);
-            socket.off('recibir_limpieza', recibirLimpiezaHandler);
-            socket.off('recibir_deshacer', recibirDeshacerHandler);
+            socket.off('recibir_trazo', onTrazo);
+            socket.off('recibir_limpieza', onLimpieza);
+            socket.off('recibir_deshacer', onDeshacer);
+            socket.off('recibir_relleno', onRelleno);
         };
     }, []);
 
@@ -95,116 +173,71 @@ function Lienzo({ esMiTurno }) {
                 deshacer();
             }
         };
-
         window.addEventListener('keydown', manejarTeclado);
         return () => window.removeEventListener('keydown', manejarTeclado);
     }, [esMiTurno]);
 
-    function posicion(event) {
+    function posicion(e) {
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
-        const escalaX = canvas.width / rect.width;
-        const escalaY = canvas.height / rect.height;
-
         return {
-            x: (event.clientX - rect.left) * escalaX,
-            y: (event.clientY - rect.top) * escalaY
+            x: (e.clientX - rect.left) * (canvas.width / rect.width),
+            y: (e.clientY - rect.top) * (canvas.height / rect.height)
         };
     }
 
-    function empezar(event) {
-        if (!esMiTurno || !canvasRef.current) return;
-
+    function trazar(desde, hasta, nuevoTrazo) {
         const ctx = canvasRef.current.getContext("2d");
-        const pos = posicion(event);
         const colorActivo = herramienta === "goma" ? "#FFFFFF" : color;
+        const segmento = { desde, hasta, color: colorActivo, grosor };
+
+        dibujarSegmento(ctx, segmento);
+        guardarTrazo(segmento, nuevoTrazo);
+        socket.emit('enviar_trazo', { ...segmento, nuevoTrazo });
+    }
+
+    function empezar(e) {
+        if (!esMiTurno || !canvasRef.current) return;
+        const pos = posicion(e);
+
+        if (herramienta === "balde") {
+            const canvas = canvasRef.current;
+            rellenarZona(canvas.getContext("2d"), canvas, pos.x, pos.y, color);
+            const relleno = { tipo: 'relleno', x: pos.x, y: pos.y, color };
+            trazos.current.push([relleno]);
+            socket.emit('enviar_relleno', relleno);
+            return;
+        }
 
         dibujando.current = true;
         ultimo.current = pos;
+        trazar(pos, pos, true);
+    }
 
-        const segmentoInicial = {
-            desde: pos,
-            hasta: pos,
-            color: colorActivo,
-            grosor
-        };
-
-        ctx.beginPath();
-        ctx.strokeStyle = colorActivo;
-        ctx.lineWidth = grosor;
-        ctx.lineCap = "round";
-        ctx.moveTo(pos.x, pos.y);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.stroke();
-
-        trazoActual.current = [segmentoInicial];
-
-        socket.emit('enviar_trazo', {
-            ...segmentoInicial,
-            nuevoTrazo: true
-        });
+    function dibujar(e) {
+        if (!esMiTurno || !dibujando.current || !canvasRef.current) return;
+        const actual = posicion(e);
+        trazar(ultimo.current, actual, false);
+        ultimo.current = actual;
     }
 
     function parar() {
-        if (dibujando.current && trazoActual.current.length > 0) {
-            trazos.current.push(trazoActual.current);
-            trazoActual.current = [];
-        }
         dibujando.current = false;
-    }
-
-    function dibujar(event) {
-        if (!esMiTurno || !dibujando.current || !canvasRef.current) return;
-
-        const ctx = canvasRef.current.getContext("2d");
-        const actual = posicion(event);
-        const colorActivo = herramienta === "goma" ? "#FFFFFF" : color;
-
-        const segmento = {
-            desde: ultimo.current,
-            hasta: actual,
-            color: colorActivo,
-            grosor
-        };
-
-        ctx.beginPath();
-        ctx.strokeStyle = colorActivo;
-        ctx.lineWidth = grosor;
-        ctx.lineCap = "round";
-        ctx.moveTo(ultimo.current.x, ultimo.current.y);
-        ctx.lineTo(actual.x, actual.y);
-        ctx.stroke();
-
-        trazoActual.current.push(segmento);
-
-        socket.emit('enviar_trazo', {
-            ...segmento,
-            nuevoTrazo: false
-        });
-
-        ultimo.current = actual;
     }
 
     function deshacer() {
         if (!esMiTurno || !canvasRef.current || trazos.current.length === 0) return;
-
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext("2d");
-
         trazos.current.pop();
-        redibujarTodo(ctx, canvas, trazos.current);
+        redibujarTodo(canvas.getContext("2d"), canvas);
         socket.emit('deshacer_trazo');
     }
 
     function limpiar() {
         if (!esMiTurno || !canvasRef.current) return;
-
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext("2d");
-
         trazos.current = [];
-        trazoActual.current = [];
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         socket.emit('limpiar_canvas');
     }
 
@@ -221,13 +254,14 @@ function Lienzo({ esMiTurno }) {
         cursor: 'pointer'
     });
 
+    const cursores = {
+        lapiz: "crosshair",
+        goma: "cell",
+        balde: "copy"
+    };
+
     return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '15px'
-        }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
             <canvas
                 ref={canvasRef}
                 width={600}
@@ -235,7 +269,7 @@ function Lienzo({ esMiTurno }) {
                 style={{
                     backgroundColor: "white",
                     borderRadius: "8px",
-                    cursor: esMiTurno ? (herramienta === "goma" ? "cell" : "crosshair") : "not-allowed"
+                    cursor: esMiTurno ? cursores[herramienta] : "not-allowed"
                 }}
                 onMouseDown={empezar}
                 onMouseUp={parar}
@@ -244,13 +278,7 @@ function Lienzo({ esMiTurno }) {
             />
 
             {esMiTurno && (
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    justifyContent: 'center',
-                    gap: '10px'
-                }}>
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
                     <button
                         type="button"
                         onClick={() => setHerramienta("lapiz")}
@@ -267,24 +295,31 @@ function Lienzo({ esMiTurno }) {
                         🧽 Goma
                     </button>
 
+                    <button
+                        type="button"
+                        onClick={() => setHerramienta("balde")}
+                        style={estiloBotonHerramienta(herramienta === "balde")}
+                    >
+                        🪣 Balde
+                    </button>
+
                     <Input
                         type="color"
+                        value={color}
                         onChange={(e) => {
                             setColor(e.target.value);
-                            setHerramienta("lapiz");
+                            setHerramienta((h) => (h === "goma" ? "lapiz" : h));
                         }}
-                        value={color}
                     />
 
                     <Input
                         type="range"
                         min="1"
                         max="30"
-                        onChange={(e) => setGrosor(Number(e.target.value))}
                         value={grosor}
+                        onChange={(e) => setGrosor(Number(e.target.value))}
                     />
 
-                    {/* BOTÓN FLECHA ATRÁS (DESHACER) */}
                     <button
                         type="button"
                         onClick={deshacer}
@@ -317,33 +352,25 @@ function Lienzo({ esMiTurno }) {
 function ChatJuego({ nombreUsuario, isPainter }) {
     const [mensaje, setMensaje] = useState('');
     const [historialChat, setHistorialChat] = useState([
-        {
-            usuario: 'Sistema',
-            texto: '¡Bienvenidos a la partida!',
-            isSystem: true
-        }
+        { usuario: 'Sistema', texto: '¡Bienvenidos a la partida!', isSystem: true }
     ]);
 
     useEffect(() => {
         const manejarNuevoMensaje = (nuevoMensaje) => {
             setHistorialChat((prev) => [...prev, nuevoMensaje]);
         };
-
         socket.on('recibir_mensaje', manejarNuevoMensaje);
-
         return () => socket.off('recibir_mensaje', manejarNuevoMensaje);
     }, []);
 
     const enviarMensaje = (e) => {
         e.preventDefault();
-
         if (!mensaje.trim() || isPainter) return;
 
         socket.emit('enviar_mensaje', {
             usuario: nombreUsuario || 'Jugador',
             texto: mensaje
         });
-
         setMensaje('');
     };
 
@@ -355,19 +382,10 @@ function ChatJuego({ nombreUsuario, isPainter }) {
                 {historialChat.map((msg, index) => (
                     <div
                         key={index}
-                        className={
-                            msg.isSystem
-                                ? styles.systemMessage
-                                : styles.messageItem
-                        }
+                        className={msg.isSystem ? styles.systemMessage : styles.messageItem}
                     >
-                        <strong className={styles.msgUser}>
-                            {msg.usuario}:
-                        </strong>
-
-                        <span className={styles.msgText}>
-                            {msg.texto}
-                        </span>
+                        <strong className={styles.msgUser}>{msg.usuario}:</strong>
+                        <span className={styles.msgText}>{msg.texto}</span>
                     </div>
                 ))}
             </div>
@@ -377,17 +395,10 @@ function ChatJuego({ nombreUsuario, isPainter }) {
                     type="text"
                     value={mensaje}
                     onChange={(e) => setMensaje(e.target.value)}
-                    placeholder={
-                        isPainter
-                            ? "Estás dibujando..."
-                            : "Escribe tu respuesta..."
-                    }
+                    placeholder={isPainter ? "Estás dibujando..." : "Escribe tu respuesta..."}
                     disabled={isPainter}
                 />
-
-                <button type="submit" disabled={isPainter}>
-                    Enviar
-                </button>
+                <button type="submit" disabled={isPainter}>Enviar</button>
             </form>
         </div>
     );
@@ -396,19 +407,9 @@ function ChatJuego({ nombreUsuario, isPainter }) {
 // --- PÁGINA PRINCIPAL ---
 export default function Page() {
     const searchParams = useSearchParams();
-
     const salaId = searchParams.get('sala') || "01";
     const rawUsuario = searchParams.get('usuario') || '';
-
-    let nombreUsuario = 'Jugador';
-
-    try {
-        const parsed = JSON.parse(rawUsuario);
-        nombreUsuario = (parsed.usuario || parsed).toString().trim();
-    } catch (e) {
-        nombreUsuario =
-            rawUsuario.replace(/['"]+/g, '').trim() || 'Jugador';
-    }
+    const nombreUsuario = obtenerNombreUsuario(rawUsuario);
 
     const [jugadores, setJugadores] = useState([]);
     const [rondaActual, setRondaActual] = useState(1);
@@ -417,51 +418,27 @@ export default function Page() {
     const [palabraSecreta, setPalabraSecreta] = useState("");
     const [longitudPalabra, setLongitudPalabra] = useState(0);
     const [dibujanteId, setDibujanteId] = useState("");
-    const [podioFinal, setPodioFinal] = useState(null);
+    const [resultadoFinal, setResultadoFinal] = useState(null);
 
-    const jugadoresRef = useRef([]);
-    useEffect(() => {
-        jugadoresRef.current = jugadores;
-    }, [jugadores]);
-
-    const miJugador = jugadores.find(
-        j => j.id === socket.id || j.socketId === socket.id
-    );
-
-    const esMiTurno = dibujanteId && socket.id
-        ? dibujanteId === socket.id
-        : (miJugador ? miJugador.dibujando : false);
+    const miJugador = jugadores.find(j => j.id === socket.id || j.socketId === socket.id);
+    const esMiTurno = Boolean(dibujanteId && socket.id ? dibujanteId === socket.id : miJugador?.dibujando);
+    const partidaEnCurso = jugadores.some(j => j.dibujando);
+    const cantidadGuiones = longitudPalabra || palabraSecreta.length;
 
     useEffect(() => {
-        const manejarActualizacion = (listaJugadores) => {
-            setJugadores(listaJugadores);
+        const unirseSala = () => {
+            socket.emit('joinRoom', { room: salaId, usuario: nombreUsuario });
         };
 
         const manejarEstadoJuego = (datos) => {
             if (!datos) return;
-
-            setPodioFinal(null);
+            setResultadoFinal(null);
             setRondaActual(datos.rondaActual ?? 1);
             setTotalRondas(datos.totalRondas ?? 3);
             setDibujanteId(datos.dibujanteId || "");
-
-            if (typeof datos.longitudPalabra === 'number') {
-                setLongitudPalabra(datos.longitudPalabra);
-            } else if (datos.palabraSecreta) {
-                setLongitudPalabra(datos.palabraSecreta.length);
-            } else {
-                setLongitudPalabra(0);
-            }
-
-            if (datos.palabraSecreta) {
-                setPalabraSecreta(datos.palabraSecreta);
-            } else {
-                setPalabraSecreta("");
-            }
-
-            if (typeof datos.tiempo === 'number') {
-                setTiempo(datos.tiempo);
-            }
+            setPalabraSecreta(datos.palabraSecreta || "");
+            setLongitudPalabra(datos.longitudPalabra ?? datos.palabraSecreta?.length ?? 0);
+            if (typeof datos.tiempo === 'number') setTiempo(datos.tiempo);
         };
 
         const manejarTuPalabra = (palabra) => {
@@ -472,40 +449,24 @@ export default function Page() {
         };
 
         const manejarTiempo = (segundos) => {
-            if (typeof segundos === 'number') {
-                setTiempo(segundos);
-            }
+            if (typeof segundos === 'number') setTiempo(segundos);
         };
 
         const manejarFinPartida = (datos) => {
-            if (datos?.top3 && datos.top3.length > 0) {
-                setPodioFinal(datos.top3);
-            } else {
-                const ordenados = [...jugadoresRef.current].sort((a, b) => b.puntos - a.puntos);
-                setPodioFinal(ordenados.slice(0, 3));
-            }
+            setResultadoFinal(datos?.top3 || []);
         };
 
-        const unirseSala = () => {
-            socket.emit('joinRoom', {
-                room: salaId,
-                usuario: nombreUsuario
-            });
-        };
-
-        socket.on('actualizar_jugadores', manejarActualizacion);
+        socket.on('actualizar_jugadores', setJugadores);
         socket.on('actualizar_estado_juego', manejarEstadoJuego);
         socket.on('tu_palabra', manejarTuPalabra);
         socket.on('actualizar_tiempo', manejarTiempo);
         socket.on('fin_partida', manejarFinPartida);
         socket.on('connect', unirseSala);
 
-        if (socket.connected) {
-            unirseSala();
-        }
+        if (socket.connected) unirseSala();
 
         return () => {
-            socket.off('actualizar_jugadores', manejarActualizacion);
+            socket.off('actualizar_jugadores', setJugadores);
             socket.off('actualizar_estado_juego', manejarEstadoJuego);
             socket.off('tu_palabra', manejarTuPalabra);
             socket.off('actualizar_tiempo', manejarTiempo);
@@ -518,14 +479,14 @@ export default function Page() {
         socket.emit('iniciar_partida', { room: salaId });
     };
 
-    const cantidadGuiones = longitudPalabra || palabraSecreta.length;
-
-    // Si alguien está dibujando, la partida ya empezó
-    const partidaEnCurso = jugadores.some(j => j.dibujando);
+    const podioFinal = resultadoFinal
+        ? (resultadoFinal.length > 0
+            ? resultadoFinal
+            : [...jugadores].sort((a, b) => b.puntos - a.puntos).slice(0, 3))
+        : null;
 
     return (
         <div className={`${styles.gamePage} ${knewave.variable} ${hammersmithOne.variable} ${leagueSpartan.variable}`}>
-
             <header className={styles.gameHeader}>
                 <div className={styles.headerBox}>
                     <span className={styles.headerLabel}>SALA</span>
@@ -534,9 +495,7 @@ export default function Page() {
 
                 <div className={styles.headerBox}>
                     <span className={styles.headerLabel}>RONDA</span>
-                    <span className={styles.headerValue}>
-                        {rondaActual} / {totalRondas}
-                    </span>
+                    <span className={styles.headerValue}>{rondaActual} / {totalRondas}</span>
                 </div>
 
                 <div className={styles.headerBox}>
@@ -546,22 +505,16 @@ export default function Page() {
             </header>
 
             <main className={styles.mainGrid}>
-
                 {/* COLUMNA 1: JUGADORES */}
                 <aside className={styles.playersCard}>
-                    <h2 className={styles.playersHeader}>
-                        JUGADORES ({jugadores.length})
-                    </h2>
+                    <h2 className={styles.playersHeader}>JUGADORES ({jugadores.length})</h2>
 
                     <ul className={styles.playersList}>
                         {jugadores.length > 0 ? (
                             jugadores.map((j, index) => (
                                 <li
                                     key={j.id || index}
-                                    className={`${styles.playerItem} ${j.dibujando
-                                        ? styles.activePainter
-                                        : ''
-                                        }`}
+                                    className={`${styles.playerItem} ${j.dibujando ? styles.activePainter : ''}`}
                                 >
                                     <div className={styles.playerInfo}>
                                         <span className={styles.playerName}>
@@ -569,21 +522,16 @@ export default function Page() {
                                             {j.esAnfitrion && '👑'}{' '}
                                             {j.dibujando && '✏️'}
                                         </span>
-
-                                        <span className={styles.playerScore}>
-                                            {j.puntos} pts
-                                        </span>
+                                        <span className={styles.playerScore}>{j.puntos} pts</span>
                                     </div>
                                 </li>
                             ))
                         ) : (
-                            <li className={styles.playerItem}>
-                                Cargando jugadores...
-                            </li>
+                            <li className={styles.playerItem}>Cargando jugadores...</li>
                         )}
                     </ul>
 
-                    {miJugador?.esAnfitrion === true && !partidaEnCurso && (
+                    {miJugador?.esAnfitrion && !partidaEnCurso && (
                         <div style={{ marginTop: '20px' }}>
                             <button
                                 onClick={iniciarPartida}
@@ -615,30 +563,23 @@ export default function Page() {
                             </p>
                         ) : (
                             <p>
-                                PALABRA:{' '}
-                                <strong>
-                                    {'_ '.repeat(cantidadGuiones)}
-                                </strong>
+                                PALABRA: <strong>{'_ '.repeat(cantidadGuiones)}</strong>
                             </p>
                         )}
                     </div>
 
                     <div className={styles.canvasWrapper}>
-                        <Lienzo esMiTurno={Boolean(esMiTurno)} />
+                        <Lienzo esMiTurno={esMiTurno} />
                     </div>
                 </section>
 
                 {/* COLUMNA 3: CHAT */}
                 <aside className={styles.chatSection}>
-                    <ChatJuego
-                        nombreUsuario={nombreUsuario}
-                        isPainter={Boolean(esMiTurno)}
-                    />
+                    <ChatJuego nombreUsuario={nombreUsuario} isPainter={esMiTurno} />
                 </aside>
-
             </main>
 
-            {/* PANTALLITA DE RESULTADOS (TOP 3) */}
+            {/* PANTALLA DE RESULTADOS (TOP 3) */}
             {podioFinal && (
                 <div style={{
                     position: 'fixed',
@@ -676,18 +617,12 @@ export default function Page() {
 
                         {[0, 1, 2].map((indice) => {
                             const jugador = podioFinal[indice];
-                            const coloresPodio = [
-                                '#f7941d',
-                                '#bdbdbd',
-                                '#a45a19'
-                            ];
-
                             return (
                                 <div
                                     key={indice}
                                     style={{
                                         width: '100%',
-                                        backgroundColor: coloresPodio[indice],
+                                        backgroundColor: COLORES_PODIO[indice],
                                         borderRadius: '9999px',
                                         padding: '14px 24px',
                                         display: 'flex',
@@ -703,10 +638,7 @@ export default function Page() {
                                         <span>{indice + 1}</span>
                                         <span>{jugador ? jugador.nombre : '—'}</span>
                                     </div>
-
-                                    <span>
-                                        {jugador ? `${jugador.puntos} pts` : ''}
-                                    </span>
+                                    <span>{jugador ? `${jugador.puntos} pts` : ''}</span>
                                 </div>
                             );
                         })}
