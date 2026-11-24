@@ -22,7 +22,7 @@ function obtenerNombreUsuario(raw) {
         const parsed = JSON.parse(raw);
         return (parsed.usuario || parsed).toString().trim() || 'Jugador';
     } catch {
-        return raw.replace(/['"]+/g, '').trim() || 'Jugador';
+        return raw.replace(/['"]+/g, '').trim() || 'Jugador';// Se recprtan los espacios
     }
 }
 

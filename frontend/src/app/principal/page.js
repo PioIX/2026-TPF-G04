@@ -63,7 +63,8 @@ export default function PrincipalPage() {
 
         const resGanadas = await fetch('http://localhost:4000/ranking/ganadas');
         const dataGanadas = await resGanadas.json();
-
+        
+        // Verifica que lo que devolvió el servidor sea realmente una lista (un array)
         setMejorPuntaje(Array.isArray(dataPuntaje) ? dataPuntaje : []);
         setMasGanadas(Array.isArray(dataGanadas) ? dataGanadas : []);
       } catch (error) {
@@ -92,6 +93,7 @@ export default function PrincipalPage() {
     return result;
   };
 
+  // Para crear una sala
   const handleOpenModalCrear = () => {
     setRoomCode(generateRoomCode());
     setPassword('');

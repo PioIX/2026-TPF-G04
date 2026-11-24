@@ -117,16 +117,19 @@ app.post('/login', async function (req, res) {
     try {
         const { usuario, contraseña } = req.body;
 
+        // Verifica que exista un usuario y una contraseña
         if (!usuario || !contraseña) {
             return res.status(400).json({
                 mensaje: "Faltan datos"
             });
         }
 
+        // Realiza query
         let resultado = await realizarQuery(
             `SELECT * FROM Usuarios WHERE usuario = '${usuario}' AND contraseña = '${contraseña}'`
         );
 
+        // Si existe:
         if (resultado.length > 0) {
             const u = resultado[0];
 
