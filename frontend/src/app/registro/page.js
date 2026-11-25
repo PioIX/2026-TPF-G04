@@ -78,9 +78,7 @@ export default function RegistroPage() {
   };
 
   return (
-    <div
-      className={`${styles.container} ${knewave.variable} ${hammersmithOne.variable} ${leagueSpartan.variable}`}
-    >
+    <div className={`${styles.container} ${knewave.variable} ${hammersmithOne.variable} ${leagueSpartan.variable}`}>
       <header className={styles.header}>
         <div className={styles.logo}>
           <Link href="/" className={`${styles.logo} ${knewave.className}`}>PINTUPIO</Link>
@@ -128,7 +126,7 @@ export default function RegistroPage() {
             />
 
             {error && <p className={styles.error}>{error}</p>}
-
+            
             <Button
               text={cargando ? "REGISTRANDO..." : "REGISTRARSE"}
               type="submit"

@@ -26,17 +26,17 @@ const hammersmithOne = Hammersmith_One({
 export default function PrincipalPage() {
   const [mejorPuntaje, setMejorPuntaje] = useState([]);
   const [masGanadas, setMasGanadas] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cargando, setCargando] = useState(true);
 
   // Estados para Modal "CREAR SALA"
   const [isModalOpenCrear, setIsModalOpenCrear] = useState(false);
-  const [roomCode, setRoomCode] = useState('');
-  const [password, setPassword] = useState('');
+  const [roomCode, setRoomCode] = useState("");
+  const [password, setPassword] = useState("");
 
   // Estados para Modal "INGRESAR A SALA"
   const [isModalOpenIngresar, setIsModalOpenIngresar] = useState(false);
-  const [codigoIngreso, setCodigoIngreso] = useState('');
-  const [passIngreso, setPassIngreso] = useState('');
+  const [codigoIngreso, setCodigoIngreso] = useState("");
+  const [passIngreso, setPassIngreso] = useState("");
 
   const router = useRouter();
 
@@ -70,7 +70,7 @@ export default function PrincipalPage() {
       } catch (error) {
         console.error('Error al obtener los datos:', error);
       } finally {
-        setLoading(false);
+        setCargando(false);
       }
     }
 
@@ -173,7 +173,7 @@ export default function PrincipalPage() {
             </div>
             <table className={styles.tabla}>
               <tbody>
-                {loading ? (
+                {cargando ? (
                   <tr><td colSpan="3">Cargando...</td></tr>
                 ) : mejorPuntaje.length > 0 ? (
                   mejorPuntaje.map((item, index) => (
@@ -197,7 +197,7 @@ export default function PrincipalPage() {
             </div>
             <table className={styles.tabla}>
               <tbody>
-                {loading ? (
+                {cargando ? (
                   <tr><td colSpan="3">Cargando...</td></tr>
                 ) : masGanadas.length > 0 ? (
                   masGanadas.map((item, index) => (
