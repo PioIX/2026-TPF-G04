@@ -36,6 +36,7 @@ function rellenarZona(ctx, canvas, xInicio, yInicio, colorHex, tolerancia = 50) 
         ];
     };
 
+    // Para que no trabaje en bucle por el color
     const [rObj, gObj, bObj] = colorSobreBlanco(y0 * ancho + x0);
     if (
         Math.abs(rObj - rNuevo) < 5 &&
@@ -43,38 +44,34 @@ function rellenarZona(ctx, canvas, xInicio, yInicio, colorHex, tolerancia = 50) 
         Math.abs(bObj - bNuevo) < 5
     ) return;
 
+    // Lista de pixeles
     const visitado = new Uint8Array(ancho * alto);
     const pila = [[x0, y0]];
 
-    while (pila.length > 0) {
+    while (pila.length) {
         const [x, y] = pila.pop();
-        if (x < 0 || y < 0 || x >= ancho || y >= alto) continue;
-
         const idx = y * ancho + x;
-        if (visitado[idx]) continue;
+
+        if (x < 0 || y < 0 || x >= ancho || y >= alto || visitado[idx]) continue;
 
         const [r, g, b] = colorSobreBlanco(idx);
         if (
+            // Tolerancia es simplemente el margen de error que le permites al bote de pintura al comparar colores.
             Math.abs(r - rObj) > tolerancia ||
             Math.abs(g - gObj) > tolerancia ||
             Math.abs(b - bObj) > tolerancia
         ) continue;
 
         visitado[idx] = 1;
-        const p = idx * 4;
-        datos[p] = rNuevo;
-        datos[p + 1] = gNuevo;
-        datos[p + 2] = bNuevo;
-        datos[p + 3] = 255;
+        datos.set([rNuevo, gNuevo, bNuevo, 255], idx * 4);
 
         pila.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
     }
-
     ctx.putImageData(imagen, 0, 0);
 }
 
 export default function Lienzo({ esMiTurno, socket }) {
-    const canvasRef = useRef(null);
+    const canvasRef = useRef(null); //fakso document.getElementbyId
     const dibujando = useRef(false);
     const ultimo = useRef({ x: 0, y: 0 });
     // Herramienta de React (Hook) que permite guardar o modificar un valor sin necesidad de renderizar la pantalla
@@ -106,21 +103,21 @@ export default function Lienzo({ esMiTurno, socket }) {
     }
 
     useEffect(() => {
-      // "canvas" es un objeto que viene integrado en HTML5/JavaScript y tiene objetos y propiedades
-      // "canvas" devuelve un objeto lleno de herramientas de dibujo llamado CanvasRenderingContext2D
-  
-      // Propiedades (como configurar el pincel antes de pintar):
-      // ctx.strokeStyle (el color de la línea)
-      // ctx.lineWidth (el grosor del trazo)
-      // tx.lineCap (la forma de la punta)
-  
-      // Métodos (las órdenes para pintar o borrar):
-      // ctx.moveTo() y ctx.lineTo() (mover el lápiz)
-      // ctx.stroke() (dibujar la línea)
-      // ctx.clearRect() (borrar todo el lienzo, como haces en el botón "Limpiar")   
-      // ctx.getImageData()
-      // ctx.putImageData() (leer y cambiar píxeles uno por uno, como haces en la herramienta del balde)
-      
+        // "canvas" es un objeto que viene integrado en HTML5/JavaScript y tiene metodos y propiedades
+        // "canvas" devuelve un objeto lleno de herramientas de dibujo llamado CanvasRenderingContext2D
+
+        // Propiedades (como configurar el pincel antes de pintar):
+        // ctx.strokeStyle (el color de la línea)
+        // ctx.lineWidth (el grosor del trazo)
+        // ctx.lineCap (la forma de la punta)
+
+        // Métodos (las órdenes para pintar o borrar):
+        // ctx.moveTo() y ctx.lineTo() (mover el lápiz)
+        // ctx.stroke() (dibujar la línea)
+        // ctx.clearRect() (borrar todo el lienzo, como haces en el botón "Limpiar")   
+        // ctx.getImageData()
+        // ctx.putImageData() (leer y cambiar píxeles uno por uno, como haces en la herramienta del balde)
+
         const canvas = canvasRef.current;
         if (!canvas || !socket) return;
         // Se devuelve un objeto lleno de herramientas de dibujo llamado CanvasRenderingContext2D
